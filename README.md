@@ -10,8 +10,8 @@
   - Daniel: Look into web scraping.
   
 ----
-###Tentative Timeline:
-This is only tentative, therefore they are subjective to be changed depending on the group members' schedules and upcoming holidays.
+### Tentative Timeline:
+<br>This is only tentative, therefore they are subjective to be changed depending on the group members' schedules and upcoming holidays.
 
 - End of November: Finish looking into using API & Web scraping.
 - Early December: Decide what metrics to use for further machine learning processes.
