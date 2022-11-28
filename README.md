@@ -2,7 +2,7 @@
 
 **To Use This Repository**: Create a separate branch by your name. Do NOT commit to the main branch.
 
-**Next meeting:** November 27th, 2022.
+**Next meeting:** December 3rd, 2022.
 
 **Action Items:**
   - Jenny: Publish codes on Github, create Discord channel and share it with group members. Look into universal API information sent by Albert.
