@@ -1,5 +1,7 @@
 from typing import List, Dict
 
+import pyspark
+
 
 class Department:
     pass
@@ -69,7 +71,7 @@ class InstitutionPublicationMediator(metaclass=Singleton):
     def get_map(self) -> institution_publication_map:
         return self.institution_publication_map
 
-    def get_nodes(self, sc:) -> :
+    #def get_nodes(self, sc:pyspark.SparkContext) -> pyspark.SparkContext:
 class DepartmentPublicationMediator(metaclass=Singleton):
     department_publication_map: Dict[Department, List[Publication]] = {}
 
