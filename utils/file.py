@@ -1,62 +1,70 @@
-import Path from pathlib
+import datetime
 
-__basePathName = None
-__path = None
-__filename = None
+from pathlib import Path
+from typing import Union
 
-def setBasePathName(basepath: str):
-    global __basePathName
-    
-    if basepath.endswith('/') == False:
-        basepath = basepath + '/'
-    __basePathName = basepath
+_basePathName: Union[str, None] = None
+_path: Union[str, None] = None
+_filename: Union[str, None] = None
 
-    p = Path(basepath)
-    p.mkdir(parents = True, exist_ok = True)
-    
-def getBasePathName() -> str:
-    global __basePathName
-    
-    
-    return __basePathName
-    
-def setPath(path: str):
-    global __path
-    
-    if path.endswith('/') == False:
+
+def set_base_path_name(base_path: str) -> None:
+    global _basePathName
+
+    if not base_path.endswith('/'):
+        base_path = base_path + '/'
+    _basePathName = base_path
+
+    p = Path(base_path)
+    p.mkdir(parents=True, exist_ok=True)
+
+
+def get_base_path_name() -> str:
+    global _basePathName
+
+    return _basePathName
+
+
+def set_path(path: str) -> None:
+    global _path
+
+    if not path.endswith('/'):
         path = path + '/'
-    __path = path
-    
-def getPath(basePath:str = '') -> str:
-    global __path
-    
-    if __path is None:
-        setPath(f'{datetime.now()}/')
+    _path = path
 
-    p = Path(f'{basePath}{__path}')
-    p.mkdir(parents = True, exist_ok = True)
 
-    return f'{basePath}{__path}'
+def get_path(basePath: str = '') -> str:
+    global _path
 
-def setFileName(filename: str):
-    global __filename
-    
-    __filename = filename
-    
-def getFileName(path: str = '') -> str:
+    if _path is None:
+        set_path(f'{datetime.now()}/')
+
+    p = Path(f'{basePath}{_path}')
+    p.mkdir(parents=True, exist_ok=True)
+
+    return f'{basePath}{_path}'
+
+
+def set_filename(filename: str) -> None:
+    global _filename
+
+    _filename = filename
+
+
+def get_filename(path: str = '', ext: str = '.parquet') -> str:
     from datetime import datetime
-    
-    global __filename
-    
-    if __filename is None:
-        setFileName(f'{datetime.utcnow().timestamp()}.parquet')
-        
-    return f'{path}{__filename}'
 
-#from configparser import ConfigParser
-#from itertools import chain
+    global _filename
 
-#parser = ConfigParser()
-#with open("foo.conf") as lines:
+    if _filename is None:
+        set_filename(f'{datetime.utcnow().timestamp()}{ext}')
+
+    return f'{path}{_filename}'
+
+# from configparser import ConfigParser
+# from itertools import chain
+
+# parser = ConfigParser()
+# with open("foo.conf") as lines:
 #    lines = chain(("[top]",), lines)  # This line does the trick.
 #    parser.read_file(lines)
