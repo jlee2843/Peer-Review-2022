@@ -1,13 +1,34 @@
-from typing import List, Dict
+from abc import ABC
+from threading import Lock
+from typing import List, Dict, Tuple, Any
 
 import pyspark
+from pyspark.sql import SparkSession
 
 
-class Department:
+class SimpleClass(ABC):
+    _name: str
+
+    def __init__(self, name: str):
+        self._name = name
+
+    def get_name(self) -> str:
+        return self._name
+
+
+class MediatorKey(ABC):
     pass
 
 
-class Institution:
+class Department(MediatorKey, SimpleClass):
+    pass
+
+
+class Institution(MediatorKey, SimpleClass):
+    pass
+
+
+class Category(MediatorKey, SimpleClass):
     pass
 
 
@@ -28,8 +49,6 @@ class Publication:
 
 
 class Singleton(type):
-    from threading import Lock
-
     _instance = {}
 
     _lock: Lock = Lock()
@@ -56,30 +75,115 @@ class Singleton(type):
         return cls._instance[cls]
 
 
-class InstitutionPublicationMediator(metaclass=Singleton):
-    institution_publication_map: Dict[Institution, List[Publication]] = {}
+class Factory(ABC, metaclass=Singleton):
+    _factory_map: Dict[str, Any] = {}
+    _lock: Lock = Lock()
 
+    def _create_object(self, identifier: str, class_name: str, *args, **kwargs):
+        with self._lock:
+            if self._factory_map.get(identifier) is None:
+                try:
+                    item = getattr(globals(), class_name)(args, kwargs)
+                    self._factory_map.update({identifier, item})
+                except Exception:
+                    raise NameError(f"Class {class_name} is not defined")
+
+    def _get_object(self, identifier: str) -> Any:
+        self._factory_map.get(identifier)
+
+
+class DepartmentFactory(Factory):
+    pass
+
+
+class InstitutionFactory(Factory):
+    pass
+
+
+class AuthorFactory(Factory):
+    pass
+
+
+class CategoryFactory(Factory):
+    pass
+
+
+class ArticleFactory(Factory):
+    pass
+
+
+class JournalFactory(Factory):
+    pass
+
+
+class PublicationFactory(Factory):
+    pass
+
+
+class Mediator(ABC, metaclass=Singleton):
+    _mediator_map: Dict[MediatorKey, List[Any]] = {}
+
+    def __init__(self, mediator_key: MediatorKey, item: Any) -> None:
+        self._add_item(mediator_key, item)
+
+    def _add_item(self, mediator_key: MediatorKey, item: Any) -> None:
+        values: List[Any] = []
+
+        if mediator_key not in self._mediator_map.keys():
+            pass
+        else:
+            values = self._mediator_map.get(mediator_key)
+
+        values.append(item)
+        self._mediator_map.update({mediator_key: values})
+
+    def get_nodes_edges(self, sql_ctx: SparkSession, method_name: List[str], relationship: str) -> \
+            Tuple[pyspark.sql.DataFrame, pyspark.sql.DataFrame]:
+        nodes: List[Tuple] = []
+        edges: List[Tuple] = []
+        for key in self._mediator_map.keys():
+            nodes.append((key, type(key), getattr(key, method_name[0])))
+            for item in self._get_value(key):
+                nodes.append((item, type(item), getattr(item, method_name[1])))
+                edges.append((key, type(item), relationship))
+
+        nodes: pyspark.sql.DataFrame = sql_ctx.createDataFrame(nodes, ['id', 'type', 'name'])
+        edges: pyspark.sql.DataFrame = sql_ctx.createDataFrame(edges, ['src', 'dst', 'relationship'])
+
+        return nodes, edges
+
+    def _get_value(self, key: MediatorKey) -> List[Any]:
+        return self._mediator_map.get(key)
+
+
+class InstitutionPublicationMediator(Mediator):
     def __init__(self, institution: Institution, publication: Publication) -> None:
-        values: List[Publication] = []
+        super().__init__(institution, publication)
 
-        if institution in self.institution_publication_map.keys():
-            values = self.institution_publication_map.get(institution)
+    def add_publication(self, institution: Institution, publication: Publication) -> None:
+        self._add_item(institution, publication)
 
-        values.append(publication)
-        self.institution_publication_map.update({institution: values})
+    def get_publication(self, institution: Institution) -> List[Publication]:
+        return self._get_value(institution)
 
-    def get_map(self) -> institution_publication_map:
-        return self.institution_publication_map
 
-    #def get_nodes(self, sc:pyspark.SparkContext) -> pyspark.SparkContext:
-class DepartmentPublicationMediator(metaclass=Singleton):
-    department_publication_map: Dict[Department, List[Publication]] = {}
-
+class DepartmentPublicationMediator(Mediator):
     def __init__(self, department: Department, publication: Publication) -> None:
-        values: List[Publication] = []
+        super().__init__(department, publication)
 
-        if department in self.department_publication_map.keys():
-            values = self.department_publication_map.get(department)
+    def add_publication(self, dept: Department, publication: Publication) -> None:
+        self._add_item(dept, publication)
 
-        values.append(publication)
-        self.department_publication_map.update({department: values})
+    def get_publication(self, dept: Department) -> List[Publication]:
+        return self._get_value(dept)
+
+
+class CategoryPublicationMediator(Mediator):
+    def __init__(self, category: Category, publication: Publication) -> None:
+        super().__init__(category, publication)
+
+    def add_publication(self, category: Category, publication: Publication) -> None:
+        self._add_item(category, publication)
+
+    def get_publication(self, category: Category) -> List[Publication]:
+        return self._get_value(category)
