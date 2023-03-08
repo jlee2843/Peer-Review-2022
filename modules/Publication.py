@@ -37,7 +37,11 @@ class Author:
 
 
 class Article:
-    pass
+    def get_title(self) -> str:
+        pass
+
+    def get_doi(self) -> str:
+        pass
 
 
 class Journal:
@@ -45,7 +49,31 @@ class Journal:
 
 
 class Publication:
-    pass
+    _journal: Journal
+    _article: Article
+    _name: str
+    _id: str
+
+    def __init__(self, doi: str) -> None:
+        self._id = doi
+
+    def __init__(self, journal: Journal, article: Article) -> None:
+        self._journal = journal
+        self._article = article
+        self._name = f'{article.get_title()}\n{article.get_doi()}'
+        self._id = article.get_doi()
+
+    def get_article(self) -> Article:
+        return self._article
+
+    def set_article(self, article: Article) -> None:
+        self._article = article
+
+    def get_journal(self) -> Journal:
+        return self._journal
+
+    def set_journal(self, journal: Journal) -> None:
+        self._journal = journal
 
 
 class Singleton(type):
@@ -79,7 +107,10 @@ class Factory(ABC, metaclass=Singleton):
     _factory_map: Dict[str, Any] = {}
     _lock: Lock = Lock()
 
-    def _create_object(self, identifier: str, class_name: str, *args, **kwargs):
+    def __init__(self):
+        pass
+
+    def _create_object(self, identifier: str, class_name: str, *args, **kwargs) -> None:
         with self._lock:
             if self._factory_map.get(identifier) is None:
                 try:
@@ -93,15 +124,27 @@ class Factory(ABC, metaclass=Singleton):
 
 
 class DepartmentFactory(Factory):
-    pass
+    def add_department(self, identifier: str, *args, **kwargs):
+        super()._create_object(identifier, "Department", args, kwargs)
+
+    def get_department(self, identifier: str) -> Department:
+        return super()._get_object(identifier)
 
 
 class InstitutionFactory(Factory):
-    pass
+    def add_institution(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Institution', args, kwargs)
+
+    def get_institution(self, identifier: str) -> Institution:
+        return super()._get_object(identifier)
 
 
 class AuthorFactory(Factory):
-    pass
+    def add_author(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Author', args, kwargs)
+
+    def get_author(self, identifier: str) -> Author:
+        return super()._get_object(identifier)
 
 
 class CategoryFactory(Factory):
