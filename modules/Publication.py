@@ -103,12 +103,9 @@ class Singleton(type):
         return cls._instance[cls]
 
 
-class Factory(ABC, metaclass=Singleton):
+class Factory:
     _factory_map: Dict[str, Any] = {}
     _lock: Lock = Lock()
-
-    def __init__(self):
-        pass
 
     def _create_object(self, identifier: str, class_name: str, *args, **kwargs) -> None:
         with self._lock:
@@ -123,7 +120,7 @@ class Factory(ABC, metaclass=Singleton):
         self._factory_map.get(identifier)
 
 
-class DepartmentFactory(Factory):
+class DepartmentFactory(Factory, metaclass=Singleton):
     def add_department(self, identifier: str, *args, **kwargs):
         super()._create_object(identifier, "Department", args, kwargs)
 
@@ -131,7 +128,7 @@ class DepartmentFactory(Factory):
         return super()._get_object(identifier)
 
 
-class InstitutionFactory(Factory):
+class InstitutionFactory(Factory, metaclass=Singleton):
     def add_institution(self, identifier: str, *args, **kwargs) -> None:
         super()._create_object(identifier, 'Institution', args, kwargs)
 
@@ -139,7 +136,7 @@ class InstitutionFactory(Factory):
         return super()._get_object(identifier)
 
 
-class AuthorFactory(Factory):
+class AuthorFactory(Factory, metaclass=Singleton):
     def add_author(self, identifier: str, *args, **kwargs) -> None:
         super()._create_object(identifier, 'Author', args, kwargs)
 
@@ -147,27 +144,40 @@ class AuthorFactory(Factory):
         return super()._get_object(identifier)
 
 
-class CategoryFactory(Factory):
-    pass
+class CategoryFactory(Factory, metaclass=Singleton):
+    def add_category(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Category', args, kwargs)
+
+    def get_category(self, identifier: str) -> Category:
+        return super()._get_object(identifier)
 
 
-class ArticleFactory(Factory):
-    pass
+class ArticleFactory(Factory, metaclass=Singleton):
+    def add_article(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Article', args, kwargs)
+
+    def get_article(self, identifier: str) -> Article:
+        return super()._get_object(identifier)
 
 
-class JournalFactory(Factory):
-    pass
+class JournalFactory(Factory, metaclass=Singleton):
+    def add_journal(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Journal', args, kwargs)
+
+    def get_journal(self, identifier: str) -> Journal:
+        return super()._get_object(identifier)
 
 
-class PublicationFactory(Factory):
-    pass
+class PublicationFactory(Factory, metaclass=Singleton):
+    def add_publication(self, identifier: str, *args, **kwargs) -> None:
+        super()._create_object(identifier, 'Publication', args, kwargs)
+
+    def get_publication(self, identifier: str) -> Publication:
+        return super()._get_object(identifier)
 
 
-class Mediator(ABC, metaclass=Singleton):
+class Mediator():
     _mediator_map: Dict[MediatorKey, List[Any]] = {}
-
-    def __init__(self, mediator_key: MediatorKey, item: Any) -> None:
-        self._add_item(mediator_key, item)
 
     def _add_item(self, mediator_key: MediatorKey, item: Any) -> None:
         values: List[Any] = []
@@ -199,34 +209,30 @@ class Mediator(ABC, metaclass=Singleton):
         return self._mediator_map.get(key)
 
 
-class InstitutionPublicationMediator(Mediator):
-    def __init__(self, institution: Institution, publication: Publication) -> None:
-        super().__init__(institution, publication)
-
+class InstitutionPublicationMediator(Mediator, metaclass=Singleton):
     def add_publication(self, institution: Institution, publication: Publication) -> None:
-        self._add_item(institution, publication)
+        super()._add_item(institution, publication)
 
     def get_publication(self, institution: Institution) -> List[Publication]:
         return self._get_value(institution)
 
 
-class DepartmentPublicationMediator(Mediator):
-    def __init__(self, department: Department, publication: Publication) -> None:
-        super().__init__(department, publication)
-
+class DepartmentPublicationMediator(Mediator, metaclass=Singleton):
     def add_publication(self, dept: Department, publication: Publication) -> None:
-        self._add_item(dept, publication)
+        super()._add_item(dept, publication)
 
     def get_publication(self, dept: Department) -> List[Publication]:
         return self._get_value(dept)
 
 
-class CategoryPublicationMediator(Mediator):
-    def __init__(self, category: Category, publication: Publication) -> None:
-        super().__init__(category, publication)
-
+class CategoryPublicationMediator(Mediator, metaclass=Singleton):
     def add_publication(self, category: Category, publication: Publication) -> None:
         self._add_item(category, publication)
 
     def get_publication(self, category: Category) -> List[Publication]:
         return self._get_value(category)
+
+
+if __name__ == '__main__':
+    assert(PublicationFactory() != ArticleFactory() != DepartmentFactory != CategoryPublicationMediator())
+    assert(CategoryPublicationMediator() == CategoryPublicationMediator())
