@@ -21,7 +21,8 @@ class Factory(metaclass=Singleton):
             if self._factory_map.get(identifier) is None:
                 result = True
                 self._factory_map.update({identifier, new_object})
-        return result
+
+            return result
 
     def get_object(self, identifier: Any) -> Any:
         self._factory_map.get(identifier)

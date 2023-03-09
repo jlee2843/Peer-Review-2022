@@ -19,8 +19,10 @@ class Mediator(metaclass=Singleton):
             else:
                 values = self._mediator_map.get(mediator_key)
 
-        values.append(item)
-        self._mediator_map.update({mediator_key: values})
+            if item not in values:
+                values.append(item)
+
+            self._mediator_map.update({mediator_key: values})
 
     def get_object(self, key: MediatorKey) -> List[Any]:
         return self._mediator_map.get(key)
