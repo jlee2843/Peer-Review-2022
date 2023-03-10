@@ -44,41 +44,41 @@ class InstitutionFactory(Factory):
         return super().get_object(identifier)
 
 
-class AuthorFactory(Factory, metaclass=Singleton):
+class AuthorFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Author:
         return super().create_object(identifier, 'Author', args, kwargs)
 
-    def get_author(self, identifier: str) -> Author:
+    def get_object(self, identifier: str) -> Author:
         return super().get_object(identifier)
 
 
-class CategoryFactory(Factory, metaclass=Singleton):
+class CategoryFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Category:
         return super().create_object(identifier, 'Category', args, kwargs)
 
-    def get_category(self, identifier: str) -> Category:
+    def get_object(self, identifier: str) -> Category:
         return super().get_object(identifier)
 
 
-class ArticleFactory(Factory, metaclass=Singleton):
+class ArticleFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
         return super().create_object(identifier, 'Article', args, kwargs)
 
-    def get_article(self, identifier: str) -> Article:
+    def get_object(self, identifier: str) -> Article:
         return super().get_object(identifier)
 
 
-class JournalFactory(Factory, metaclass=Singleton):
+class JournalFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Journal:
         return super().create_object(identifier, 'Journal', args, kwargs)
 
-    def get_journal(self, identifier: str) -> Journal:
+    def get_object(self, identifier: str) -> Journal:
         return super().get_object(identifier)
 
 
-class PublicationFactory(Factory, metaclass=Singleton):
+class PublicationFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Publication:
         return super().create_object(identifier, 'Publication', args, kwargs)
 
-    def get_publication(self, identifier: str) -> Publication:
+    def get_object(self, identifier: str) -> Publication:
         return super().get_object(identifier)

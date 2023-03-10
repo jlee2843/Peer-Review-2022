@@ -59,7 +59,7 @@ class DepartmentPublicationMediator(Mediator):
         return self.get_object(dept)
 
 
-class CategoryPublicationMediator(Mediator, metaclass=Singleton):
+class CategoryPublicationMediator(Mediator):
     def add_object(self, category: Category, publication: Publication) -> None:
         self.add_object(category, publication)
 
