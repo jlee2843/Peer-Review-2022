@@ -1,5 +1,6 @@
-from typing import Union, List, Iterator
 import time
+from typing import Union, List
+
 import doi
 import requests
 
