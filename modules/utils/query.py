@@ -1,14 +1,14 @@
 import time
-from typing import Union, List
+from typing import Union, List, Tuple, Any
 
 import doi
 import requests
 
 
-def get_json_data(counter: int, cursor: int, url: str, attr: str = "text") -> List:
+def get_json_data(counter: int, cursor: int, url: str, attr: str = "text") -> Tuple[int, Any]:
     import json
 
-    return cursor, json.loads(get_web_data(counter, url))
+    return cursor, json.loads(get_web_data(counter, url, attr))
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
@@ -29,7 +29,7 @@ def check_doi(x: str):
         return x.strip()
 
 
-def process_data(json_info, section: str, keys: List[str], cursor: int, disable: bool = True) -> List:
+def process_data(json_info: dict, section: str, keys: List[str], cursor: int, disable: bool = True) -> List:
     journal_list = [[entry + cursor] + [get_value(journal, key) for key in keys] for entry, journal in
                     enumerate(json_info[section])]
     if disable is False:
@@ -38,7 +38,7 @@ def process_data(json_info, section: str, keys: List[str], cursor: int, disable:
     return journal_list
 
 
-def get_value(data, key):
+def get_value(data: dict, key: str):
     result = None
 
     try:

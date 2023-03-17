@@ -51,6 +51,7 @@ class Publication(FactoryInstantiationClass):
     _id: str
 
     def __init__(self, journal: Journal, article: Article) -> None:
+        super().__init__(True, journal, article)
         self._journal = journal
         self._article = article
         self._name = f'{article.get_title()}\n{article.get_doi()}'
