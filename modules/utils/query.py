@@ -1,14 +1,14 @@
 import time
-from typing import Union, List
+from typing import Union, List, Tuple, Any
 
 import doi
 import requests
 
 
-def get_json_data(counter: int, cursor: int, url: str, attr: str = "text") -> List:
+def get_json_data(counter: int, cursor: int, url: str, attr: str = "text") -> Tuple[int, Any]:
     import json
 
-    return cursor, json.loads(get_web_data(counter, url))
+    return cursor, json.loads(get_web_data(counter, url, attr))
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
