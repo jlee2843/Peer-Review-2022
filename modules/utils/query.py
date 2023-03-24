@@ -5,15 +5,17 @@ import doi
 import requests
 
 
-def get_json_data(counter: int, cursor: int, url: str, attr: str = "text") -> Tuple[int, Any]:
-    import json
-
-    return cursor, json.loads(get_web_data(counter, url, attr))
+def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
+    return cursor, get_web_data(counter, url, "json")
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
+    from requests import Response
+
     try:
-        return getattr(requests.get(url), attr)
+        response: Response = requests.get(url)
+        response.raise_for_status()
+        return getattr(response, attr)
     except Exception as e:
         if counter == 10:
             raise e

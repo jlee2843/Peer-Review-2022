@@ -15,7 +15,9 @@ def get_publication_info(doi: str) -> json:
 def process_publication_info(result: json) -> Dict:
     result = {}
     # create publication related objects
-    # get publication list
+    # get publication list - xml
+    # get publication list - pdf
+    # get publication list - webcrawl
     return result
 
 
@@ -27,6 +29,13 @@ def process_link(links: List[Dict], key: str, value: str) -> List[str]:
             continue
         elif tmp == value:
             result[value] = link.get('url')
+    pass
+
+
+def test_link(url: str, attr: str = 'text'):
+    from modules.utils.query import get_web_data
+    result = None
+    result = get_web_data(0, url, attr)
     pass
 
 
