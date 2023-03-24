@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from threading import Lock
 
 
@@ -6,26 +6,31 @@ class FactoryInstantiationClass(ABC):
 
     def __init__(self, factory: bool = False, *args, **kwargs):
         if factory:
-            # create object
-            pass
+            create_object(*args, **kwargs)
+            
         else:
             raise RuntimeError(f'Please instantiate class through the corresponding Factory')
-
+        
+    @abstractmethod
+    def create_object(self, *args, **kwargs):
+        pass
 
 class MediatorKey(ABC):
     pass
 
-
 class Department(MediatorKey, FactoryInstantiationClass):
-    pass
+    def create_object(self, *args, **kwargs):
+        pass
 
 
 class Institution(MediatorKey, FactoryInstantiationClass):
-    pass
+    def create_object(self, *args, **kwargs):
+        pass
 
 
 class Category(MediatorKey, FactoryInstantiationClass):
-    pass
+    def create_object(self, *args, **kwargs):
+        pass
 
 
 class Author(FactoryInstantiationClass):
@@ -33,6 +38,8 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
+    def __init__(self, factory:bool = False, doi:str):
+        
     def get_title(self) -> str:
         pass
 

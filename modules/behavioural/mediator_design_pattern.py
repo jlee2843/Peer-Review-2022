@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Union
 
 import pyspark
 from pyspark.sql import SparkSession
@@ -7,10 +7,10 @@ from modules.building_block import *
 
 
 class Mediator(metaclass=Singleton):
-    _mediator_map: Dict[MediatorKey, List[Any]] = {}
+    _mediator_map: Dict[Union[MediatorKey, str], List[Any]] = {}
     _lock: Lock = Lock()
 
-    def add_object(self, mediator_key: MediatorKey, item: Any) -> None:
+    def add_object(self, mediator_key: Union[MediatorKey, str], item: Any) -> None:
         values: List[Any] = []
 
         with self._lock:
@@ -24,7 +24,7 @@ class Mediator(metaclass=Singleton):
 
             self._mediator_map.update({mediator_key: values})
 
-    def get_object(self, key: MediatorKey) -> List[Any]:
+    def get_object(self, key: Union[MediatorKey, str]) -> List[Any]:
         return self._mediator_map.get(key)
 
     def get_nodes_edges(self, sql_ctx: SparkSession, method_name: List[str], relationship: str) -> \
@@ -56,12 +56,20 @@ class DepartmentPublicationMediator(Mediator):
         super().add_object(dept, publication)
 
     def get_object(self, dept: Department) -> List[Publication]:
-        return self.get_object(dept)
+        return super().get_object(dept)
 
 
 class CategoryPublicationMediator(Mediator):
     def add_object(self, category: Category, publication: Publication) -> None:
-        self.add_object(category, publication)
+        super().add_object(category, publication)
 
     def get_object(self, category: Category) -> List[Publication]:
-        return self.get_object(category)
+        return super().get_object(category)
+
+
+class ArticleLinkTypeMediator(Mediator):
+    def add_object(self, link_type:str, article: Article) -> None:
+        super().add_object(link_type, article)
+
+    def get_object(self, link_type:str) -> List[Article]:
+        return super().get_object(link_type)
