@@ -7,16 +7,18 @@ class FactoryInstantiationClass(ABC):
     def __init__(self, factory: bool = False, *args, **kwargs):
         if factory:
             create_object(*args, **kwargs)
-            
+
         else:
             raise RuntimeError(f'Please instantiate class through the corresponding Factory')
-        
+
     @abstractmethod
     def create_object(self, *args, **kwargs):
         pass
 
+
 class MediatorKey(ABC):
     pass
+
 
 class Department(MediatorKey, FactoryInstantiationClass):
     def create_object(self, *args, **kwargs):
@@ -38,17 +40,35 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
-    def __init__(self, factory:bool = False, doi:str):
-        
+    doi: str
+    title: str
+
     def get_title(self) -> str:
         pass
 
     def get_doi(self) -> str:
-        pass
+        return self.doi
+
+    def create_object(self, doi: str, title: str):
+        self.doi = doi
 
 
 class Journal(FactoryInstantiationClass):
-    pass
+    prefix: str
+    title: str
+    issn: str
+    impact_factor: float
+
+    def create_object(self, prefix: str, title: str, issn: str = None):
+        self.prefix = prefix
+        self.title = title
+        self.issn = issn
+
+    def set_impact_factor(self, impact_factor: float):
+        self.impact_factor = impact_factor
+
+    def get_impact_factor(self) -> float:
+        return self.impact_factor
 
 
 class Publication(FactoryInstantiationClass):

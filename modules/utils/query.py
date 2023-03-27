@@ -3,7 +3,7 @@ from typing import Union, List, Tuple, Any
 
 import doi
 import requests
-from requests import HTTPError
+from requests import HTTPError, Response
 
 
 def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
@@ -11,18 +11,24 @@ def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
+    return getattr(connect_url(counter, url), attr)
+
+
+def connect_url(counter: int, url: str) -> Response:
+    response: Response = Response()
+
     try:
-        return getattr(requests.get(url), attr)
+        response = requests.get(url)
     except Exception as e:
         if counter == 10:
-            raise e
+            raise HTTPError from e
 
         time.sleep(300)
-        return get_web_data(counter + 1, url)
+        return connect_url(counter + 1, url)
 
     finally:
         response.raise_for_status()
-        return getattr(response, attr)
+        return response
 
 
 def check_doi(x: str):
