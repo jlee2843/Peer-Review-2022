@@ -1,7 +1,27 @@
-import json
 from typing import List, Dict, Union
 
 import crossref_commons.retrieval as xref
+
+from modules.behavioural.mediator_design_pattern import ArticleLinkTypeMediator
+
+"""
+Unlike conventional source code comments, the docstring should describe what the function does, not how.
+
+What should a docstring look like?
+
+The doc string line should begin with a capital letter and end with a period.
+The first line should be a short description.
+If there are more lines in the documentation string, the second line should be blank, visually separating the summary from the rest of the description.
+The following lines should be one or more paragraphs describing the object’s calling conventions, its side effects, etc.
+"""
+
+"""
+This is a class for mathematical operations on complex numbers.
+
+Attributes:
+    real (int): The real part of complex number.
+    imag (int): The imaginary part of complex number.
+"""
 
 
 def get_publication_info(doi: str) -> Dict:
@@ -13,10 +33,31 @@ def get_publication_info(doi: str) -> Dict:
 
 
 def process_publication_info(result: Dict):
-    links = {}
+    """
+    Summary line.
+
+    Extended description of function.
+
+    Parameters:
+    arg1 (int): Description of arg1
+
+    Returns:
+    int: Description of return value
+
+    """
     # create publication related objects
     # get publication list
-    return result
+    tmp = process_link(result['link'], 'content-type', 'application/xml')
+    if tmp is None or valid_link(tmp) is False:
+        tmp = process_link(result['link'], 'content-type', 'application/pdf')
+        if tmp is None or valid_link(tmp) is False:
+            ArticleLinkTypeMediator.add_object('web', 'Article')
+        else:
+            # add url to article
+            ArticleLinkTypeMediator.add_object('pdf', 'Article')
+    else:
+        # add url to article
+        ArticleLinkTypeMediator.add_object('pdf', 'Article')
 
 
 def process_link(links: List[Dict], key: str, value: str) -> Union[str, None]:
@@ -31,11 +72,17 @@ def process_link(links: List[Dict], key: str, value: str) -> Union[str, None]:
     return None
 
 
-def test_link(url: str, attr: str = 'text'):
-    from modules.utils.query import get_web_data
-    result = None
-    result = get_web_data(0, url, attr)
-    print(result)
+def valid_link(url: str) -> bool:
+    from modules.utils.query import connect_url
+
+    from requests import HTTPError
+
+    try:
+        result = connect_url(0, url)
+        print(result)
+        return True
+    except HTTPError:
+        return False
 
 
 if __name__ == '__main__':
@@ -43,3 +90,5 @@ if __name__ == '__main__':
     # get_publication_info("10.1101/104778")
     get_publication_info("10.1038/s41598-017-04402-4")
     get_publication_info("10.1109/MM.2019.2910009")
+    valid_link('https://www.nature.com/articles/s41598-017-04402-4.pdf')
+    valid_link('http://xplorestaging.ieee.org/ielx7/40/8709856/08686049.pdf?arnumber=8686049')
