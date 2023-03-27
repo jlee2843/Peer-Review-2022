@@ -15,14 +15,7 @@ def get_publication_info(doi: str) -> Dict:
 def process_publication_info(result: Dict):
     links = {}
     # create publication related objects
-    # get publication list - xml
-    tmp = process_link(result['link'], 'content-type', 'application/xml')
-    if tmp:
-        result['xml'] = tmp
-    else:
-        tmp = process_link(result['link'], 'content-type', 'application/xml')
-    # get publication list - pdf
-    # get publication list - webcrawl
+    # get publication list
     return result
 
 
@@ -50,4 +43,3 @@ if __name__ == '__main__':
     # get_publication_info("10.1101/104778")
     get_publication_info("10.1038/s41598-017-04402-4")
     get_publication_info("10.1109/MM.2019.2910009")
-    test_link('http://xplorestaging.ieee.org/ielx7/40/8709856/08686049.pdf?arnumber=8686049')

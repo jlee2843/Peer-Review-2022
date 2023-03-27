@@ -11,14 +11,8 @@ def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
-    from requests import Response
-
-    response: Response
-
     try:
-        response = requests.get(url)
-    except HTTPError as e:
-        raise e
+        return getattr(requests.get(url), attr)
     except Exception as e:
         if counter == 10:
             raise e
