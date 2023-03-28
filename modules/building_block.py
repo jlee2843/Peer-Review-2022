@@ -3,10 +3,12 @@ from threading import Lock
 
 
 class FactoryInstantiationClass(ABC):
+    def __init__(self):
+        self.__init__(factory=False)
 
     def __init__(self, factory: bool = False, *args, **kwargs):
         if factory:
-            create_object(*args, **kwargs)
+            self.create_object(*args, **kwargs)
 
         else:
             raise RuntimeError(f'Please instantiate class through the corresponding Factory')
@@ -42,6 +44,8 @@ class Author(FactoryInstantiationClass):
 class Article(FactoryInstantiationClass):
     doi: str
     title: str
+    publication_link: str
+    prepub_link: str
 
     def get_title(self) -> str:
         pass
@@ -49,8 +53,20 @@ class Article(FactoryInstantiationClass):
     def get_doi(self) -> str:
         return self.doi
 
-    def create_object(self, doi: str, title: str):
+    def create_object(self, doi: str):
         self.doi = doi
+
+    def set_publication_link(self, link: str):
+        self.publication_link = link
+
+    def get_publication_link(self) -> str:
+        return self.publication_link
+
+    def set_prepub_link(self, link: str):
+        self.prepub_link = link
+
+    def get_prepub_link(self) -> str:
+        return self.prepub_link
 
 
 class Journal(FactoryInstantiationClass):

@@ -8,7 +8,7 @@ class Factory(metaclass=Singleton):
     _lock: Lock = Lock()
 
     def create_object(self, identifier: Any, class_name: str, *args, **kwargs) -> Any:
-        new_object = getattr(globals(), class_name)(True, args, kwargs)
+        new_object = getattr(globals(), class_name)(True, identifier, *args, **kwargs)
 
         if self.add_object(identifier, new_object) is False:
             new_object = self.get_object(identifier)
@@ -25,7 +25,8 @@ class Factory(metaclass=Singleton):
             return result
 
     def get_object(self, identifier: Any) -> Any:
-        self._factory_map.get(identifier)
+        with self._lock:
+            return self._factory_map.get(identifier)
 
 
 class DepartmentFactory(Factory):
@@ -62,7 +63,7 @@ class CategoryFactory(Factory):
 
 class ArticleFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
-        return super().create_object(identifier, 'Article', args, kwargs)
+        return super().create_object(identifier=identifier, class_name='Article', *args, **kwargs)
 
     def get_object(self, identifier: str) -> Article:
         return super().get_object(identifier)

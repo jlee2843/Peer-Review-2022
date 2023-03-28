@@ -1,8 +1,7 @@
 from typing import List, Dict, Union
 
-import crossref_commons.retrieval as xref
-
 from modules.behavioural.mediator_design_pattern import ArticleLinkTypeMediator
+from modules.creational.factory_design_pattern import ArticleFactory
 
 """
 Unlike conventional source code comments, the docstring should describe what the function does, not how.
@@ -25,6 +24,8 @@ Attributes:
 
 
 def get_publication_info(doi: str) -> Dict:
+    import crossref_commons.retrieval as xref
+
     import json
 
     result = xref.get_publication_as_json(doi)
@@ -47,23 +48,28 @@ def process_publication_info(doi: str, result: Dict):
     int: Description of return value
 
     """
-    # create publication related objects
+    # update publication related objects
+    from modules.creational.factory_design_pattern import ArticleFactory
+
+    from modules.building_block import Article
+    article: Article = ArticleFactory.get_object(doi)
     # get publication list
     tmp = process_link(result['link'], 'content-type', 'application/xml')
     if tmp is None or valid_link(tmp) is False:
         tmp = process_link(result['link'], 'content-type', 'application/pdf')
         if tmp is None or valid_link(tmp) is False:
-            ArticleLinkTypeMediator.add_object('web', 'Article')
+            ArticleLinkTypeMediator.add_object('web', article)
         else:
             # add url to article
-            ArticleLinkTypeMediator.add_object('pdf', 'Article')
+            article.set_publication_link(tmp)
+            ArticleLinkTypeMediator.add_object('pdf', article)
     else:
         # add url to article
-        ArticleLinkTypeMediator.add_object('pdf', 'Article')
+        article.set_publication_link(tmp)
+        ArticleLinkTypeMediator.add_object('xml', article)
 
 
 def process_link(links: List[Dict], key: str, value: str) -> Union[str, None]:
-
     for link in links:
         tmp = link.get(key)
         if tmp is None:
@@ -90,7 +96,10 @@ def valid_link(url: str) -> bool:
 if __name__ == '__main__':
     # get_publication_info('10.5555/515151')
     # get_publication_info("10.1101/104778")
+    factory = ArticleFactory()
+    article = factory.create_object(identifier="10.1038/s41598-017-04402-4")
+    print(article)
     get_publication_info("10.1038/s41598-017-04402-4")
-    get_publication_info("10.1109/MM.2019.2910009")
-    valid_link('https://www.nature.com/articles/s41598-017-04402-4.pdf')
-    valid_link('http://xplorestaging.ieee.org/ielx7/40/8709856/08686049.pdf?arnumber=8686049')
+    # get_publication_info("10.1109/MM.2019.2910009")
+    # valid_link('https://www.nature.com/articles/s41598-017-04402-4.pdf')
+    # valid_link('http://xplorestaging.ieee.org/ielx7/40/8709856/08686049.pdf?arnumber=8686049')
