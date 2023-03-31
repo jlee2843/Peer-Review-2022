@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from threading import Lock
+from typing import List
 
 
 class FactoryInstantiationClass(ABC):
@@ -42,31 +43,34 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
-    doi: str
-    title: str
-    publication_link: str
-    prepub_link: str
+    _doi: str
+    _title: str
+    _publication_link: str
+    _prepub_link: str
+    _primary_author: Author
+    _collaborator: List[Author]
 
     def get_title(self) -> str:
-        pass
+        return self._title
 
     def get_doi(self) -> str:
-        return self.doi
+        return self._doi
 
-    def create_object(self, doi: str):
-        self.doi = doi
+    def create_object(self, doi: str, title: str):
+        self._doi = doi
+        self._title = title
 
     def set_publication_link(self, link: str):
-        self.publication_link = link
+        self._publication_link = link
 
     def get_publication_link(self) -> str:
-        return self.publication_link
+        return self._publication_link
 
     def set_prepub_link(self, link: str):
-        self.prepub_link = link
+        self._prepub_link = link
 
     def get_prepub_link(self) -> str:
-        return self.prepub_link
+        return self._prepub_link
 
 
 class Journal(FactoryInstantiationClass):
