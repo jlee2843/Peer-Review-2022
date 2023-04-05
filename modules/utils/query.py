@@ -1,5 +1,5 @@
 import time
-from typing import Union, List, Tuple, Any
+from typing import Union, Tuple, Any
 
 import doi
 import requests
@@ -36,15 +36,6 @@ def check_doi(x: str):
         raise Exception(f'invalid doi: {x.strip()}')
     else:
         return x.strip()
-
-
-def process_data(json_info: dict, section: str, keys: List[str], cursor: int, disable: bool = True) -> List:
-    journal_list = [[entry + cursor] + [get_value(journal, key) for key in keys] for entry, journal in
-                    enumerate(json_info[section])]
-    if disable is False:
-        time.sleep(60)
-
-    return journal_list
 
 
 def get_value(data: dict, key: str):
