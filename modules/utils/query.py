@@ -6,8 +6,14 @@ import requests
 from requests import HTTPError, Response
 
 
+class Query:
+    def __init__(self, data):
+        self._result = data
+        pass
+
+
 def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
-    return cursor, get_web_data(counter, url, "json")
+    return cursor, Query(get_web_data(counter, url, "json"))
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:

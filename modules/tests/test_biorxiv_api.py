@@ -13,8 +13,20 @@ if __name__ == '__main__':
     unittest.main()
 '''
 
-from modules.utils.biorxiv_api import process_data
+from modules.utils.query import Query
+import pytest
 
+
+@pytest.fixture()
+def query():
+    return Query("test")
+
+
+def test_query(query):
+    assert isinstance(query, Query)
+
+
+'''
 if __name__ == '__main__':
     # process_data(json_info: dict, section: str, keys: List[str], cursor: int)
     json_info = {}
@@ -22,3 +34,4 @@ if __name__ == '__main__':
     keys = []
     cursor = 0
     process_data(json_info, section, keys, cursor)
+'''
