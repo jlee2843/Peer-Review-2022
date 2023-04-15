@@ -1,5 +1,5 @@
 import time
-from typing import Union, Tuple, Any
+from typing import Tuple, Any
 
 import doi
 import requests
@@ -9,15 +9,17 @@ from requests import HTTPError, Response
 class Query:
     def __init__(self, data):
         self._result = data
-        pass
+
+    def get_result(self):
+        return self._result
 
 
 def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
     return cursor, Query(get_web_data(counter, url, "json"))
 
 
-def get_web_data(counter: int, url: str, attr: str = "text") -> Union[str, bytes]:
-    return getattr(connect_url(counter, url), attr)
+def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
+    return getattr(connect_url(counter, url), attr)()
 
 
 def connect_url(counter: int, url: str) -> Response:
@@ -39,7 +41,7 @@ def connect_url(counter: int, url: str) -> Response:
 
 def check_doi(x: str):
     if doi.validate_doi(x.strip()) is None:
-        raise Exception(f'invalid doi: {x.strip()}')
+        raise ValueError(f'invalid doi: {x.strip()}')
     else:
         return x.strip()
 
@@ -55,3 +57,8 @@ def get_value(data: dict, key: str):
 
     finally:
         return result
+
+
+if __name__ == '__main__':
+    url = 'https://api.biorxiv.org/details/biorxiv/2020-08-21/2020-08-28'
+    print(Query(get_web_data(0, url, 'json')).get_result())
