@@ -1,5 +1,5 @@
 import time
-from typing import Tuple, Any
+from typing import Tuple, Any, List
 
 import doi
 import requests
@@ -7,19 +7,49 @@ from requests import HTTPError, Response
 
 
 class Query:
-    def __init__(self, data):
-        self._result = data
+    _result = None
+
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str]):
+        self._url = url
+        self._keys = keys
+        self._col_names = col_names
 
     def get_result(self):
         return self._result
 
+    def get_keys(self):
+        return self._keys
 
-def get_json_data(counter: int, cursor: int, url: str) -> Tuple[int, Any]:
-    return cursor, Query(get_web_data(counter, url, "json"))
+    def get_url(self):
+        return self._url
+
+    def get_col_names(self):
+        return self._col_names
+
+    def set_result(self, data):
+        self._result = data
+
+
+def get_json_data(counter: int, cursor: int, query: Query) -> Tuple[int, Query]:
+    query.set_result(get_web_data(counter, query.get_url(), "json"))
+    return cursor, query
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
-    return getattr(connect_url(counter, url), attr)()
+    result: Any
+    valid = ['text', 'content', 'json']
+    attr = attr.strip().lower()
+
+    try:
+        if attr in valid:
+            pass
+        else:
+            raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
+
+        result = getattr(connect_url(counter, url), attr)
+        return result()
+    except TypeError:
+        return result
 
 
 def connect_url(counter: int, url: str) -> Response:
@@ -57,8 +87,3 @@ def get_value(data: dict, key: str):
 
     finally:
         return result
-
-
-if __name__ == '__main__':
-    url = 'https://api.biorxiv.org/details/biorxiv/2020-08-21/2020-08-28'
-    print(Query(get_web_data(0, url, 'json')).get_result())
