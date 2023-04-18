@@ -87,3 +87,20 @@ def get_value(data: dict, key: str):
 
     finally:
         return result
+
+
+def freq_count(x, y):
+    return x[y].value_counts()
+
+
+def flatten(y):
+    return sorted([sublist for inner in y for sublist in inner], key=lambda x: x[0])
+
+
+# flatten = lambda y: sorted([sublist for inner in y for sublist in inner],
+#                           key=lambda x: x[0])
+
+def create_df(x, y):
+    return pd.DataFrame(data=x[:, 1:], index=x[:, 0], column=y)
+
+# create_df = lambda x, y: pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
