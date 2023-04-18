@@ -1,7 +1,9 @@
 import time
+from datetime import datetime
 from typing import Tuple, Any, List
 
 import doi
+import numpy as np
 import pandas as pd
 import requests
 from requests import HTTPError, Response
@@ -90,6 +92,14 @@ def get_value(data: dict, key: str):
         return result
 
 
+def convert_date(value: str) -> datetime:
+    try:
+        return datetime.strptime(value.strip().split(':')[0], '%Y-%m-%d')
+    except Exception as e:
+        print(e)
+        return pd.NaT
+
+
 def freq_count(x, y):
     return x[y].value_counts()
 
@@ -101,7 +111,7 @@ def flatten(y):
 # flatten = lambda y: sorted([sublist for inner in y for sublist in inner],
 #                           key=lambda x: x[0])
 
-def create_df(x, y):
-    return pd.DataFrame(data=x[:, 1:], index=x[:, 0], column=y)
+def create_df(x: np.ndarray, y: List):
+    return pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
 
 # create_df = lambda x, y: pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)

@@ -14,11 +14,12 @@ if __name__ == '__main__':
 '''
 from typing import Tuple
 
+import numpy as np
 import pytest
 
 from modules.creational.factory_design_pattern import ArticleFactory
-from modules.utils.biorxiv_api import process_data
-from modules.utils.query import Query, get_web_data, get_json_data, create_df, flatten
+from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df
+from modules.utils.query import Query, get_web_data, get_json_data, create_df
 
 
 @pytest.fixture()
@@ -139,8 +140,27 @@ def test_get_value(prepub_query):
 
 
 def test_create_article(prepub_query):
-    result = flatten(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
-    df = create_df(result, prepub_query.get_col_names())
+    result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
+    assert type(result) is np.ndarray
+    assert type(prepub_query.get_col_names()) is list
+    df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
     for row in range(len(df)):
+        df.loc[str(row), 'Title']
         # ArticleFactory.create_object(df[row,'DOI'], df[row, 'Title'])
-        assert ArticleFactory.get_object(df[row],'DOI')
+        # ArticleFactory.create_object(df.loc[row, 'DOI'])
+        # assert ArticleFactory.get_object(df.loc[row, 'DOI']) is not None
+        id = df.loc[str(row), 'DOI']
+        create_article(doi=df.loc[str(row), 'DOI'],
+                       title=df.loc[str(row), 'Title'],
+                       authors=df.loc[str(row), 'Authors'],
+                       corr_authors=df.loc[str(row), 'Corresponding_Authors'],
+                       institution=df.loc[str(row), 'Institution'],
+                       date=df.loc[str(row), 'date'],
+                       version=df.loc[str(row), 'Version'],
+                       type=df.loc[str(row), 'Type'],
+                       category=df.loc[str(row), 'category'],
+                       xml=df.loc[str(row), 'Xml'],
+                       pub_doi=df.loc[str(row), 'Published'])
+
+        assert id == '10.1101/339747'
+        assert ArticleFactory.get_object(id) is not None
