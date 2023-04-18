@@ -145,7 +145,6 @@ def test_create_article(prepub_query):
     assert type(prepub_query.get_col_names()) is list
     df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
     for row in range(len(df)):
-        df.loc[str(row), 'Title']
         # ArticleFactory.create_object(df[row,'DOI'], df[row, 'Title'])
         # ArticleFactory.create_object(df.loc[row, 'DOI'])
         # assert ArticleFactory.get_object(df.loc[row, 'DOI']) is not None
@@ -155,10 +154,10 @@ def test_create_article(prepub_query):
                        authors=df.loc[str(row), 'Authors'],
                        corr_authors=df.loc[str(row), 'Corresponding_Authors'],
                        institution=df.loc[str(row), 'Institution'],
-                       date=df.loc[str(row), 'date'],
+                       date=df.loc[str(row), 'Date'],
                        version=df.loc[str(row), 'Version'],
                        type=df.loc[str(row), 'Type'],
-                       category=df.loc[str(row), 'category'],
+                       category=df.loc[str(row), 'Category'],
                        xml=df.loc[str(row), 'Xml'],
                        pub_doi=df.loc[str(row), 'Published'])
 
