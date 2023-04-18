@@ -16,7 +16,9 @@ from typing import Tuple
 
 import pytest
 
-from modules.utils.query import Query, get_web_data, get_json_data
+from modules.creational.factory_design_pattern import ArticleFactory
+from modules.utils.biorxiv_api import process_data
+from modules.utils.query import Query, get_web_data, get_json_data, create_df, flatten
 
 
 @pytest.fixture()
@@ -121,11 +123,9 @@ def test_valid_attr(query):
 
 
 def test_process_biorxiv_query(prepub_query):
-    from modules.utils.biorxiv_api import process_data
-
     result = process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0)
     assert result[0][1] is not None
-    result = process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0, disable=False)
+    result = process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0)
     assert len(result[0]) == len(prepub_query.get_keys()) + 1
 
 
@@ -139,4 +139,8 @@ def test_get_value(prepub_query):
 
 
 def test_create_article(prepub_query):
-    pass
+    result = flatten(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
+    df = create_df(result, prepub_query.get_col_names())
+    for row in range(len(df)):
+        # ArticleFactory.create_object(df[row,'DOI'], df[row, 'Title'])
+        assert ArticleFactory.get_object(df[row],'DOI')

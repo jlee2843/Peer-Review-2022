@@ -2,6 +2,7 @@ import time
 from typing import Tuple, Any, List
 
 import doi
+import pandas as pd
 import requests
 from requests import HTTPError, Response
 
