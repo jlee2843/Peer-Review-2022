@@ -56,9 +56,10 @@ class Article(FactoryInstantiationClass):
     def get_doi(self) -> str:
         return self._doi
 
-    def create_object(self, doi: str, title: str):
-        self._doi = doi
-        self._title = title
+    def create_object(self, *args, **kwargs):
+        self._doi = kwargs.pop('doi')
+        self._title = kwargs.pop('title')
+
 
     def set_publication_link(self, link: str):
         self._publication_link = link

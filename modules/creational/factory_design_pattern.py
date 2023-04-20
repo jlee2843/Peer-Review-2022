@@ -8,7 +8,8 @@ class Factory(metaclass=Singleton):
     _lock: Lock = Lock()
 
     def create_object(self, identifier: Any, class_path: str, *args, **kwargs) -> Any:
-        new_object = Factory.import_class(class_path)(True, identifier, *args, **kwargs)
+        kwargs.update(identifier=identifier)
+        new_object = Factory.import_class(class_path)(True, *args, **kwargs)
 
         if self.add_object(identifier, new_object) is False:
             new_object = self.get_object(identifier)
