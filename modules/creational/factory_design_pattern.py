@@ -8,7 +8,6 @@ class Factory(metaclass=Singleton):
     _lock: Lock = Lock()
 
     def create_object(self, identifier: Any, class_path: str, *args, **kwargs) -> Any:
-        kwargs.update(identifier=identifier)
         new_object = Factory.import_class(class_path)(True, *args, **kwargs)
 
         if self.add_object(identifier, new_object) is False:
@@ -72,6 +71,7 @@ class CategoryFactory(Factory):
 
 class ArticleFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
+        kwargs.update(doi=identifier)
         return super().create_object(identifier, 'modules.building_block.Article', *args, **kwargs)
 
     def get_object(self, identifier: str) -> Article:

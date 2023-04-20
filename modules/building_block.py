@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from threading import Lock
-from typing import List
 
 
 class FactoryInstantiationClass(ABC):
-    def __init__(self):
-        self.__init__(factory=False)
+    def __init__(self, *args, **kwargs):
+        self.__init__(factory=False, *args, **kwargs)
 
     def __init__(self, factory: bool = False, *args, **kwargs):
         if factory:
@@ -43,12 +42,21 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
-    _doi: str
-    _title: str
-    _publication_link: str
-    _prepub_link: str
-    _primary_author: Author
-    _collaborator: List[Author]
+    def __init__(self, *args, **kwargs):
+        self._doi = None
+        self._title = None
+        self._authors = None
+        self._authors_detail = None
+        self._corr_authors = None
+        self._corr_authors_detail = None
+        self._institution = None
+        self._date = None
+        self._version = None
+        self._type = None
+        self._category = None
+        self._xml = None
+        self._pub_doi = None
+        self._publication_link = None
 
     def get_title(self) -> str:
         return self._title
@@ -59,7 +67,15 @@ class Article(FactoryInstantiationClass):
     def create_object(self, *args, **kwargs):
         self._doi = kwargs.pop('doi')
         self._title = kwargs.pop('title')
-
+        self._authors = kwargs.pop('authors')
+        self._corr_authors = kwargs.pop('corr_authors')
+        self._institution = kwargs.pop('institution')
+        self._date = kwargs.pop('date')
+        self._version = kwargs.pop('version')
+        self._type = kwargs.pop('type')
+        self._category = kwargs.pop('category')
+        self._xml = kwargs.pop('category')
+        self._pub_doi = kwargs.pop('pub_doi')
 
     def set_publication_link(self, link: str):
         self._publication_link = link

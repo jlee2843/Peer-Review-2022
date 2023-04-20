@@ -18,7 +18,6 @@ def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, d
 def create_article(doi, *args, **kwargs):
     from modules.creational.factory_design_pattern import ArticleFactory
 
-
     ArticleFactory().create_object(identifier=doi, *args, **kwargs)
 
 
