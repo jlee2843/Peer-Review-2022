@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from modules.building_block import *
 
@@ -10,12 +10,12 @@ class Factory(metaclass=Singleton):
     def create_object(self, identifier: Any, class_path: str, *args, **kwargs) -> Any:
         new_object = Factory.import_class(class_path)(True, *args, **kwargs)
 
-        if self.add_object(identifier, new_object) is False:
+        if self._add_object(identifier, new_object) is False:
             new_object = self.get_object(identifier)
 
         return new_object
 
-    def add_object(self, identifier: Any, new_object: Any) -> bool:
+    def _add_object(self, identifier: Any, new_object: Any) -> bool:
         result = False
         with self._lock:
             if self._factory_map.get(identifier) is None:
@@ -70,12 +70,24 @@ class CategoryFactory(Factory):
 
 
 class ArticleFactory(Factory):
+    def __init__(self):
+        self._pub_list = None
+
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
         kwargs.update(doi=identifier)
         return super().create_object(identifier, 'modules.building_block.Article', *args, **kwargs)
 
     def get_object(self, identifier: str) -> Article:
         return super().get_object(identifier)
+
+    def add_publication_list(self, doi):
+        if doi in self._pub_list:
+            pass
+        else:
+            self._pub_list.add(doi)
+
+    def get_publication_list(self) -> List[str]:
+        return self._pub_list
 
 
 class JournalFactory(Factory):

@@ -17,6 +17,7 @@ from typing import Tuple
 import numpy as np
 import pytest
 
+from modules.building_block import Article
 from modules.creational.factory_design_pattern import ArticleFactory
 from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df
 from modules.utils.query import Query, get_web_data, get_json_data, create_df
@@ -140,6 +141,8 @@ def test_get_value(prepub_query):
 
 
 def test_create_article(prepub_query):
+    with pytest.raises(RuntimeError, match='Please instantiate class through the corresponding Factory'):
+        Article()
     result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
     assert type(result) is np.ndarray
     assert type(prepub_query.get_col_names()) is list
@@ -148,7 +151,7 @@ def test_create_article(prepub_query):
         # ArticleFactory.create_object(df[row,'DOI'], df[row, 'Title'])
         # ArticleFactory.create_object(df.loc[row, 'DOI'])
         # assert ArticleFactory.get_object(df.loc[row, 'DOI']) is not None
-        id = df.loc[str(row), 'DOI']
+        doi = df.loc[str(row), 'DOI']
         create_article(doi=df.loc[str(row), 'DOI'],
                        title=df.loc[str(row), 'Title'],
                        authors=df.loc[str(row), 'Authors'],
@@ -161,5 +164,5 @@ def test_create_article(prepub_query):
                        xml=df.loc[str(row), 'Xml'],
                        pub_doi=df.loc[str(row), 'Published'])
 
-        assert id == '10.1101/339747'
-        assert ArticleFactory.get_object(id) is not None
+        assert doi == '10.1101/339747'
+        assert ArticleFactory().get_object(identifier=doi) is not None

@@ -8,13 +8,13 @@ class FactoryInstantiationClass(ABC):
 
     def __init__(self, factory: bool = False, *args, **kwargs):
         if factory:
-            self.create_object(*args, **kwargs)
+            self._create_object(*args, **kwargs)
 
         else:
-            raise RuntimeError(f'Please instantiate class through the corresponding Factory')
+            raise RuntimeError('Please instantiate class through the corresponding Factory')
 
     @abstractmethod
-    def create_object(self, *args, **kwargs):
+    def _create_object(self, *args, **kwargs):
         pass
 
 
@@ -23,18 +23,15 @@ class MediatorKey(ABC):
 
 
 class Department(MediatorKey, FactoryInstantiationClass):
-    def create_object(self, *args, **kwargs):
-        pass
+    pass
 
 
 class Institution(MediatorKey, FactoryInstantiationClass):
-    def create_object(self, *args, **kwargs):
-        pass
+    pass
 
 
 class Category(MediatorKey, FactoryInstantiationClass):
-    def create_object(self, *args, **kwargs):
-        pass
+    pass
 
 
 class Author(FactoryInstantiationClass):
@@ -42,29 +39,15 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
-    def __init__(self, *args, **kwargs):
-        self._doi = None
-        self._title = None
-        self._authors = None
+    def __init__(self, factory: bool = False, *args, **kwargs):
+        super().__init__(factory, *args, **kwargs)
         self._authors_detail = None
-        self._corr_authors = None
         self._corr_authors_detail = None
-        self._institution = None
-        self._date = None
-        self._version = None
-        self._type = None
-        self._category = None
-        self._xml = None
-        self._pub_doi = None
         self._publication_link = None
 
-    def get_title(self) -> str:
-        return self._title
+    def _create_object(self, *args, **kwargs):
+        from modules.creational.factory_design_pattern import ArticleFactory
 
-    def get_doi(self) -> str:
-        return self._doi
-
-    def create_object(self, *args, **kwargs):
         self._doi = kwargs.pop('doi')
         self._title = kwargs.pop('title')
         self._authors = kwargs.pop('authors')
@@ -74,20 +57,25 @@ class Article(FactoryInstantiationClass):
         self._version = kwargs.pop('version')
         self._type = kwargs.pop('type')
         self._category = kwargs.pop('category')
-        self._xml = kwargs.pop('category')
+        self._xml = kwargs.pop('xml')
         self._pub_doi = kwargs.pop('pub_doi')
+
+        if self._pub_doi == 'NA':
+            pass
+        else:
+            ArticleFactory().add_publication_list(self._pub_doi)
+
+    def get_title(self) -> str:
+        return self._title
+
+    def get_doi(self) -> str:
+        return self._doi
 
     def set_publication_link(self, link: str):
         self._publication_link = link
 
     def get_publication_link(self) -> str:
         return self._publication_link
-
-    def set_prepub_link(self, link: str):
-        self._prepub_link = link
-
-    def get_prepub_link(self) -> str:
-        return self._prepub_link
 
 
 class Journal(FactoryInstantiationClass):
