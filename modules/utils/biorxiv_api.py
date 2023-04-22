@@ -19,6 +19,9 @@ def create_article(doi, *args, **kwargs):
     from modules.creational.factory_design_pattern import ArticleFactory
 
     ArticleFactory().create_object(identifier=doi, *args, **kwargs)
+    article = ArticleFactory().get_object(doi)
+    if article.get_publication_link() != 'NA':
+        ArticleFactory().add_publication_list(doi)
 
 
 def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:

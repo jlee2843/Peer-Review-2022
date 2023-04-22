@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from threading import Lock
 
 
@@ -46,8 +47,6 @@ class Article(FactoryInstantiationClass):
         self._publication_link = None
 
     def _create_object(self, *args, **kwargs):
-        from modules.creational.factory_design_pattern import ArticleFactory
-
         self._doi = kwargs.pop('doi')
         self._title = kwargs.pop('title')
         self._authors = kwargs.pop('authors')
@@ -60,11 +59,6 @@ class Article(FactoryInstantiationClass):
         self._xml = kwargs.pop('xml')
         self._pub_doi = kwargs.pop('pub_doi')
 
-        if self._pub_doi == 'NA':
-            pass
-        else:
-            ArticleFactory().add_publication_list(self._pub_doi)
-
     def get_title(self) -> str:
         return self._title
 
@@ -76,6 +70,12 @@ class Article(FactoryInstantiationClass):
 
     def get_publication_link(self) -> str:
         return self._publication_link
+
+    def get_version(self) -> int:
+        return self._version
+
+    def get_date(self) -> datetime:
+        return self._date
 
 
 class Journal(FactoryInstantiationClass):

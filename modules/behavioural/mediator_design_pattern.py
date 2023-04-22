@@ -14,11 +14,7 @@ class Mediator(metaclass=Singleton):
         values: List[Any] = []
 
         with self._lock:
-            if mediator_key not in self._mediator_map.keys():
-                pass
-            else:
-                values = self._mediator_map.get(mediator_key)
-
+            values = self._mediator_map.get(mediator_key, [])
             if item not in values:
                 values.append(item)
 
@@ -68,8 +64,28 @@ class CategoryPublicationMediator(Mediator):
 
 
 class ArticleLinkTypeMediator(Mediator):
-    def add_object(self, link_type:str, article: Article) -> None:
+    def add_object(self, link_type: str, article: Article) -> None:
         super().add_object(link_type, article)
 
-    def get_object(self, link_type:str) -> List[Article]:
+    def get_object(self, link_type: str) -> List[Article]:
         return super().get_object(link_type)
+
+
+class PublishedPrepubArticleMediator(Mediator):
+    def add_object(self, pub_doi: str, article: Article) -> None:
+        values: List[Article] = None
+
+        with self._lock:
+            value: Union[Article, None] = self.get_object(pub_doi)
+            if value is None or \
+                    (value is not None and
+                     article.get_version() <= value.get_version() and article.get_date() < value.get_date()):
+                value = article
+
+            self._mediator_map.update({pub_doi: [value]})
+
+    def get_object(self, pub_doi: str) -> Article:
+        result = self._mediator_map.get(pub_doi)
+        if result is not None:
+            result = result[0]
+        return result
