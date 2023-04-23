@@ -1,5 +1,8 @@
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Set, Union
 
+from sortedcontainers import SortedList
+
+from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import *
 
 
@@ -71,23 +74,36 @@ class CategoryFactory(Factory):
 
 class ArticleFactory(Factory):
     def __init__(self):
-        self._pub_list = None
+        self._pub_list: Set[str] = {}
 
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
         kwargs.update(doi=identifier)
-        return super().create_object(identifier, 'modules.building_block.Article', *args, **kwargs)
+        with self._lock:
+            new_object = Factory.import_class('modules.building_block.Article')(True, *args, **kwargs)
+            articles: SortedList = self._factory_map.get(identifier, SortedList(key=lambda x: x.get_version()))
+            articles.add(new_object)
+            self._factory_map[identifier] = articles
+
+        return new_object
 
     def get_object(self, identifier: str) -> Article:
-        return super().get_object(identifier)
+        result: Union[SortedList, None] = self._factory_map.get(identifier)
+        if result is not None:
+            result = result.__getitem__(0)
+        return result
 
-    def add_publication_list(self, doi):
-        if doi in self._pub_list:
-            pass
-        else:
-            self._pub_list.add(doi)
+    def add_publication_list(self, article: Article):
+        with self._lock:
+            pub_doi = article.get_pub_doi()
+            if len(self._pub_list) == 0:
+                self._pub_list: Set[str] = {pub_doi}
+            else:
+                self._pub_list.add(pub_doi)
+
+        PublishedPrepubArticleMediator().add_object(pub_doi, article)
 
     def get_publication_list(self) -> List[str]:
-        return self._pub_list
+        return list(self._pub_list)
 
 
 class JournalFactory(Factory):

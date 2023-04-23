@@ -18,10 +18,10 @@ def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, d
 def create_article(doi, *args, **kwargs):
     from modules.creational.factory_design_pattern import ArticleFactory
 
-    ArticleFactory().create_object(identifier=doi, *args, **kwargs)
-    article = ArticleFactory().get_object(doi)
-    if article.get_publication_link() != 'NA':
-        ArticleFactory().add_publication_list(doi)
+    article = ArticleFactory().create_object(identifier=doi, *args, **kwargs)
+    pub_doi = article.get_pub_doi()
+    if pub_doi.upper() != 'NA':
+        ArticleFactory().add_publication_list(article)
 
 
 def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -33,7 +33,7 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         df.Corresponding_Authors = df.Corresponding_Authors.astype('str').map(lambda x: x.strip())
         df.Institution = df.Institution.map(lambda x: x.strip().upper()).astype('category')
         df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64')
-        df.Version = df.Version.satype('int32')
+        df.Version = df.Version.astype('int32')
         df.Type = df.Type.map(lambda x: x.strip().lower()).astype('category')
         df.Category = df.Category.map(lambda x: x.strip().title()).astype('category')
         df.Xml = df.Xml.astype('str')

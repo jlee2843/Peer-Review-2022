@@ -77,6 +77,9 @@ class Article(FactoryInstantiationClass):
     def get_date(self) -> datetime:
         return self._date
 
+    def get_pub_doi(self) -> str:
+        return self._pub_doi
+
 
 class Journal(FactoryInstantiationClass):
     prefix: str
