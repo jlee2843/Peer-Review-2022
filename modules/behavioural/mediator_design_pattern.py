@@ -11,7 +11,7 @@ class Mediator(metaclass=Singleton):
     _lock: Lock = Lock()
 
     def add_object(self, mediator_key: Union[MediatorKey, str], item: Any) -> None:
-        values: List[Any] = []
+        values: List[Any]
 
         with self._lock:
             values = self._mediator_map.get(mediator_key, [])
@@ -73,10 +73,10 @@ class ArticleLinkTypeMediator(Mediator):
 
 class PublishedPrepubArticleMediator(Mediator):
     def add_object(self, pub_doi: str, article: Article) -> None:
-        values: List[Article] = None
+        values: Union[List[Article], None]
 
         with self._lock:
-            value: Union[Article, None] = self.get_object(pub_doi)
+            value = self.get_object(pub_doi)
             if value is None or \
                     (value is not None and
                      article.get_version() <= value.get_version() and article.get_date() < value.get_date()):

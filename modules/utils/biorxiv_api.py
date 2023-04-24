@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import pandas as pd
 
+from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.utils.query import get_value, convert_date
 
 
@@ -22,6 +23,7 @@ def create_article(doi, *args, **kwargs):
     pub_doi = article.get_pub_doi()
     if pub_doi.upper() != 'NA':
         ArticleFactory().add_publication_list(article)
+        PublishedPrepubArticleMediator().add_object(pub_doi, article)
 
 
 def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:

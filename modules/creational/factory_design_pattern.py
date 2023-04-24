@@ -100,8 +100,6 @@ class ArticleFactory(Factory):
             else:
                 self._pub_list.add(pub_doi)
 
-        PublishedPrepubArticleMediator().add_object(pub_doi, article)
-
     def get_publication_list(self) -> List[str]:
         return list(self._pub_list)
 
