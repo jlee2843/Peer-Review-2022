@@ -4,6 +4,7 @@ from typing import List, Tuple
 import pandas as pd
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
+from modules.creational.factory_design_pattern import ArticleFactory
 from modules.utils.query import get_value, convert_date
 
 
@@ -45,3 +46,18 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         print(e.with_traceback)
 
     return df
+
+
+def receive_initial_version():
+    dois = get_list_incomplete()
+
+
+def get_list_incomplete() -> List[str]:
+    result: List = []
+    dois = ArticleFactory().get_publication_list()
+    for doi in dois:
+        article = PublishedPrepubArticleMediator().get_object(doi)
+        if article.get_version() != 1:
+            result.append(article.get_doi())
+
+    return result
