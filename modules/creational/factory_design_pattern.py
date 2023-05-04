@@ -1,8 +1,7 @@
-from typing import Dict, Any, List, Set, Union
+from typing import Dict, Any, Set
 
 from sortedcontainers import SortedList
 
-from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import *
 
 
@@ -74,7 +73,7 @@ class CategoryFactory(Factory):
 
 class ArticleFactory(Factory):
     def __init__(self):
-        self._pub_list: Set[str] = {}
+        self._pub_list: Set[str] = set()
 
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
         kwargs.update(doi=identifier)
@@ -86,8 +85,8 @@ class ArticleFactory(Factory):
 
         return new_object
 
-    def get_object(self, identifier: str) -> Article:
-        result: Union[SortedList, None] = self._factory_map.get(identifier)
+    def get_object(self, identifier: str) -> Optional[Article]:
+        result: Optional[SortedList] = self._factory_map.get(identifier)
         if result is not None:
             result = result.__getitem__(0)
         return result
@@ -106,6 +105,11 @@ class ArticleFactory(Factory):
 
 class JournalFactory(Factory):
     def create_object(self, identifier: str, *args, **kwargs) -> Journal:
+        """
+
+        :type identifier: str
+        """
+        kwargs.update(title=identifier)
         return super().create_object(identifier, 'modules.building_block.Journal', *args, **kwargs)
 
     def get_object(self, identifier: str) -> Journal:

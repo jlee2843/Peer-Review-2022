@@ -1,10 +1,13 @@
 import time
 from typing import List, Tuple
 
+import numpy as np
 import pandas as pd
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
-from modules.utils.query import get_value, convert_date
+from modules.building_block import Journal, Article, Publication
+from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
+from modules.utils.query import get_value, convert_date, get_json_data, Query
 
 
 def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
@@ -16,7 +19,7 @@ def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, d
     return journal_list
 
 
-def create_article(doi, *args, **kwargs):
+def create_article(doi: str, *args: object, **kwargs: object) -> Article:
     from modules.creational.factory_design_pattern import ArticleFactory
 
     article = ArticleFactory().create_object(identifier=doi, *args, **kwargs)
@@ -25,6 +28,7 @@ def create_article(doi, *args, **kwargs):
         ArticleFactory().add_publication_list(article)
         PublishedPrepubArticleMediator().add_object(pub_doi, article)
 
+    return article
 
 def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
     try:
@@ -45,3 +49,16 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         print(e.with_traceback)
 
     return df
+
+
+def get_journal_name(query: Query):
+    _, result = get_json_data(0, 0, query)
+    return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 1]
+
+
+def create_journal(name: str) -> Journal:
+    return JournalFactory().create_object(identifier=name)
+
+
+def create_publication(journal: Journal, article: Article) -> Publication:
+    return PublicationFactory().create_object(article.get_pub_doi(), journal=journal, article=article)

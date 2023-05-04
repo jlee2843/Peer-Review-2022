@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from threading import Lock
+from typing import Optional, List
 
 
 class FactoryInstantiationClass(ABC):
     def __init__(self, *args, **kwargs):
         self.__init__(factory=False, *args, **kwargs)
 
-    def __init__(self, factory: bool = False, *args, **kwargs):
+    def __init__(self, factory: bool = False, *args: object, **kwargs: object) -> None:
         if factory:
             self._create_object(*args, **kwargs)
 
@@ -40,11 +41,9 @@ class Author(FactoryInstantiationClass):
 
 
 class Article(FactoryInstantiationClass):
-    def __init__(self, factory: bool = False, *args, **kwargs):
-        super().__init__(factory, *args, **kwargs)
-        self._authors_detail = None
-        self._corr_authors_detail = None
-        self._publication_link = None
+    _corr_authors_detail: Optional[Author]
+    _authors_detail: Optional[List[Author]]
+    _publication_link: Optional[str]
 
     def _create_object(self, *args, **kwargs):
         self._doi = kwargs.pop('doi')
@@ -58,6 +57,9 @@ class Article(FactoryInstantiationClass):
         self._category = kwargs.pop('category')
         self._xml = kwargs.pop('xml')
         self._pub_doi = kwargs.pop('pub_doi')
+        self._authors_detail = kwargs.pop('authors_detail', None)
+        self._corr_authors_detail = kwargs.pop('corr_authors_detail', None)
+        self._publication_link = kwargs.pop('publication_link', None)
 
     def get_title(self) -> str:
         return self._title
@@ -82,21 +84,36 @@ class Article(FactoryInstantiationClass):
 
 
 class Journal(FactoryInstantiationClass):
-    prefix: str
-    title: str
-    issn: str
-    impact_factor: float
+    _prefix: Optional[str]
+    _issn: Optional[str]
+    _impact_factor: Optional[float]
 
-    def create_object(self, prefix: str, title: str, issn: str = None):
-        self.prefix = prefix
-        self.title = title
-        self.issn = issn
+    def _create_object(self, *args, **kwargs):
+        self._prefix = kwargs.pop('prefix', '')
+        self._title = kwargs.pop('title')
+        self._issn = kwargs.pop('issn', '')
+        self._impact_factor = kwargs.pop('impact_factor', 0.0)
 
     def set_impact_factor(self, impact_factor: float):
-        self.impact_factor = impact_factor
+        self._impact_factor = impact_factor
 
     def get_impact_factor(self) -> float:
-        return self.impact_factor
+        return self._impact_factor
+
+    def get_title(self) -> str:
+        return self._title
+
+    def set_prefix(self, prefix: str):
+        self._prefix = prefix
+
+    def get_prefix(self) -> str:
+        return self._prefix
+
+    def set_issn(self, issn:str):
+        self._issn = issn
+
+    def get_issn(self) -> str:
+        return self._issn
 
 
 class Publication(FactoryInstantiationClass):
@@ -105,12 +122,11 @@ class Publication(FactoryInstantiationClass):
     _name: str
     _id: str
 
-    def __init__(self, journal: Journal, article: Article) -> None:
-        super().__init__(True, journal, article)
+    def _create_object(self, journal: Journal, article: Article) -> None:
         self._journal = journal
         self._article = article
-        self._name = f'{article.get_title()}\n{article.get_doi()}'
-        self._id = article.get_doi()
+        self._name = f'{article.get_title()}\n{article.get_pub_doi()}'
+        self._id = article.get_pub_doi()
 
     def get_article(self) -> Article:
         return self._article

@@ -12,21 +12,24 @@ class MyTestCase(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 '''
-from typing import Tuple
+from typing import Tuple, List
 
+import numpy
 import numpy as np
 import pytest
 
-from modules.building_block import Article
-from modules.creational.factory_design_pattern import ArticleFactory
-from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df
+from modules.building_block import Article, Journal
+from modules.creational.factory_design_pattern import ArticleFactory, JournalFactory, PublicationFactory
+from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
+    get_journal_name, create_publication
 from modules.utils.query import Query, get_web_data, get_json_data, create_df
 
 
 @pytest.fixture()
 def prepub_query():
     # url = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
-    url = 'https://api.biorxiv.org/details/biorxiv/10.1101/339747'
+    # url = 'https://api.biorxiv.org/details/biorxiv/10.1101/339747'
+    url = 'https://api.biorxiv.org/details/medrxiv/10.1101/2021.04.29.21256344'
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
     col_names = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
@@ -39,13 +42,15 @@ def prepub_query():
 @pytest.fixture()
 def pub_query():
     url = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
-    keys: Tuple = (
-        "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
-        "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
-        "published_date")
-    col_names = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Category", "Journal",
-                 "Preprint_Date", "Published_Date"]
-    query = Query(url, keys, col_names)
+    #    keys: Tuple = (
+    #        "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
+    #        "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
+    #        "published_date")
+    #    col_names = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Category", "Journal",
+    #                 "Preprint_Date", "Published_Date"]
+    keys: Tuple = ('published_journal',)
+    col_names: List[str] = ['Journal']
+    query: Query = Query(url, keys, col_names)
     return get_json_data(0, 0, query)[1]
 
 
@@ -164,5 +169,47 @@ def test_create_article(prepub_query):
                        xml=df.loc[str(row), 'Xml'],
                        pub_doi=df.loc[str(row), 'Published'])
 
-        assert doi == '10.1101/339747'
+        assert doi == '10.1101/2021.04.29.21256344'
         assert ArticleFactory().get_object(identifier=doi) is not None
+
+
+def test_create_journal(pub_query):
+    journal = create_journal(get_journal_name(pub_query))
+    assert pub_query.get_keys() == ('published_journal',)
+    assert get_journal_name(pub_query) == 'PLOS ONE'
+    assert type(journal) is Journal
+    assert journal is JournalFactory().get_object(journal.get_title())
+    assert journal.get_prefix() == ''
+    assert journal.get_issn() == ''
+    assert journal.get_impact_factor() == 0.0
+
+
+def test_create_publication(prepub_query:Query, pub_query):
+    '''
+    url = 'https://api.biorxiv.org/details/medrxiv/10.1101/2021.04.29.21256344'
+    keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
+                   'version', 'type', 'category', 'jatsxml', 'published')
+    col_names = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
+                 "Category", "Xml", "Published"]
+    query = Query(url, keys, col_names)
+    _, prepub_query = get_json_data(0, 0, query)
+    '''
+
+    result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
+    df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
+    article = create_article(doi=df.loc['0', 'DOI'],
+                             title=df.loc['0', 'Title'],
+                             authors=df.loc['0', 'Authors'],
+                             corr_authors=df.loc['0', 'Corresponding_Authors'],
+                             institution=df.loc['0', 'Institution'],
+                             date=df.loc['0', 'Date'],
+                             version=df.loc['0', 'Version'],
+                             type=df.loc['0', 'Type'],
+                             category=df.loc['0', 'Category'],
+                             xml=df.loc['0', 'Xml'],
+                             pub_doi=df.loc['0', 'Published'])
+
+    assert article is not None
+    journal = create_journal(get_journal_name(pub_query))
+    publication = create_publication(journal, article)
+    assert publication is PublicationFactory().get_object(article.get_pub_doi())
