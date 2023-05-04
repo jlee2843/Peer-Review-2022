@@ -6,7 +6,7 @@ import pandas as pd
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
-from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
+from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory, ArticleFactory
 from modules.utils.query import get_value, convert_date, get_json_data, Query
 
 

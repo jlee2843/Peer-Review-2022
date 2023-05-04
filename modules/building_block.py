@@ -109,7 +109,7 @@ class Journal(FactoryInstantiationClass):
     def get_prefix(self) -> str:
         return self._prefix
 
-    def set_issn(self, issn:str):
+    def set_issn(self, issn: str):
         self._issn = issn
 
     def get_issn(self) -> str:
