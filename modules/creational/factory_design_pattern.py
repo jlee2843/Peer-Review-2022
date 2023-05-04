@@ -10,10 +10,12 @@ class Factory(metaclass=Singleton):
     _lock: Lock = Lock()
 
     def create_object(self, identifier: Any, class_path: str, *args, **kwargs) -> Any:
-        new_object = Factory.import_class(class_path)(True, *args, **kwargs)
+        with self._lock:
+            kwargs.update(doi=identifier)
+            new_object = Factory.import_class(class_path)(True, *args, **kwargs)
 
-        if self._add_object(identifier, new_object) is False:
-            new_object = self.get_object(identifier)
+            if self._add_object(identifier, new_object) is False:
+                new_object = self.get_object(identifier)
 
         return new_object
 
@@ -76,8 +78,8 @@ class ArticleFactory(Factory):
         self._pub_list: Set[str] = set()
 
     def create_object(self, identifier: str, *args, **kwargs) -> Article:
-        kwargs.update(doi=identifier)
         with self._lock:
+            kwargs.update(doi=identifier)
             new_object = Factory.import_class('modules.building_block.Article')(True, *args, **kwargs)
             articles: SortedList = self._factory_map.get(identifier, SortedList(key=lambda x: x.get_version()))
             articles.add(new_object)

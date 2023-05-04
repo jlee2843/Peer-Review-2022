@@ -51,6 +51,21 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def receive_initial_version():
+    dois = get_list_incomplete()
+
+
+def get_list_incomplete() -> List[str]:
+    result: List = []
+    dois = ArticleFactory().get_publication_list()
+    for doi in dois:
+        article = PublishedPrepubArticleMediator().get_object(doi)
+        if article.get_version() != 1:
+            result.append(article.get_doi())
+
+    return result
+
+
 def get_journal_name(query: Query):
     _, result = get_json_data(0, 0, query)
     return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 1]
