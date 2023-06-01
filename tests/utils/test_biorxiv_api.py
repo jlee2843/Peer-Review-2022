@@ -1,4 +1,4 @@
-'''
+"""
 Standard Unit Testing in Python
 
 import unittest
@@ -11,10 +11,9 @@ class MyTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-'''
+"""
 from typing import Tuple, List
 
-import numpy
 import numpy as np
 import pytest
 
@@ -46,7 +45,8 @@ def pub_query():
     #        "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
     #        "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
     #        "published_date")
-    #    col_names = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Category", "Journal",
+    #    col_names = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution",
+    #                 "Category", "Journal",
     #                 "Preprint_Date", "Published_Date"]
     keys: Tuple = ('published_journal',)
     col_names: List[str] = ['Journal']
@@ -184,8 +184,8 @@ def test_create_journal(pub_query):
     assert journal.get_impact_factor() == 0.0
 
 
-def test_create_publication(prepub_query:Query, pub_query):
-    '''
+def test_create_publication(prepub_query: Query, pub_query):
+    """
     url = 'https://api.biorxiv.org/details/medrxiv/10.1101/2021.04.29.21256344'
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
@@ -193,7 +193,7 @@ def test_create_publication(prepub_query:Query, pub_query):
                  "Category", "Xml", "Published"]
     query = Query(url, keys, col_names)
     _, prepub_query = get_json_data(0, 0, query)
-    '''
+    """
 
     result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
     df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))

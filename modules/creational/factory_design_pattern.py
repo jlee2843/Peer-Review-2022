@@ -9,7 +9,7 @@ class Factory(metaclass=Singleton):
     _factory_map: Dict[Any, Any] = {}
     _lock: Lock = Lock()
 
-    def create_object(self, identifier: Any, class_path: str, *args, **kwargs) -> Any:
+    def create_object(self, identifier: str, class_path: str, *args, **kwargs) -> Any:
         with self._lock:
             kwargs.update(doi=identifier)
             new_object = Factory.import_class(class_path)(True, *args, **kwargs)
@@ -19,7 +19,7 @@ class Factory(metaclass=Singleton):
 
         return new_object
 
-    def _add_object(self, identifier: Any, new_object: Any) -> bool:
+    def _add_object(self, identifier: str, new_object: Any) -> bool:
         result = False
         with self._lock:
             if self._factory_map.get(identifier) is None:
@@ -28,7 +28,7 @@ class Factory(metaclass=Singleton):
 
             return result
 
-    def get_object(self, identifier: Any) -> Any:
+    def get_object(self, identifier: str) -> Any:
         with self._lock:
             return self._factory_map.get(identifier)
 
