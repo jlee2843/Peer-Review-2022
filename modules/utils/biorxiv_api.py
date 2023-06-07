@@ -30,6 +30,7 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
 
     return article
 
+
 def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
     try:
         df['Num_of_Authors'] = df.Authors.apply(lambda x: len(x.split(';')))
@@ -51,13 +52,9 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def receive_initial_version():
-    dois = get_list_incomplete()
-
-
-def get_list_incomplete() -> List[str]:
-    result: List = []
-    dois = ArticleFactory().get_publication_list()
+def receive_missing_initial_version_list() -> List[str]:
+    result: List[str] = []
+    dois: List[str] = ArticleFactory().get_publication_list()
     for doi in dois:
         article = PublishedPrepubArticleMediator().get_object(doi)
         if article.get_version() != 1:

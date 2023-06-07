@@ -15,12 +15,14 @@ if __name__ == '__main__':
 from typing import Tuple, List
 
 import numpy as np
+import pandas as pd
 import pytest
 
+from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Article, Journal
 from modules.creational.factory_design_pattern import ArticleFactory, JournalFactory, PublicationFactory
 from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
-    get_journal_name, create_publication
+    get_journal_name, create_publication, receive_missing_initial_version_list
 from modules.utils.query import Query, get_web_data, get_json_data, create_df
 
 
@@ -41,13 +43,6 @@ def prepub_query():
 @pytest.fixture()
 def pub_query():
     url = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
-    #    keys: Tuple = (
-    #        "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
-    #        "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
-    #        "published_date")
-    #    col_names = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution",
-    #                 "Category", "Journal",
-    #                 "Preprint_Date", "Published_Date"]
     keys: Tuple = ('published_journal',)
     col_names: List[str] = ['Journal']
     query: Query = Query(url, keys, col_names)
@@ -153,9 +148,6 @@ def test_create_article(prepub_query):
     assert type(prepub_query.get_col_names()) is list
     df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
     for row in range(len(df)):
-        # ArticleFactory.create_object(df[row,'DOI'], df[row, 'Title'])
-        # ArticleFactory.create_object(df.loc[row, 'DOI'])
-        # assert ArticleFactory.get_object(df.loc[row, 'DOI']) is not None
         doi = df.loc[str(row), 'DOI']
         create_article(doi=df.loc[str(row), 'DOI'],
                        title=df.loc[str(row), 'Title'],
@@ -213,3 +205,59 @@ def test_create_publication(prepub_query: Query, pub_query):
     journal = create_journal(get_journal_name(pub_query))
     publication = create_publication(journal, article)
     assert publication is PublicationFactory().get_object(article.get_pub_doi())
+
+
+@pytest.fixture
+def prepub_test_file():
+    from pathlib import Path
+    import json
+
+    keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
+                   'version', 'type', 'category', 'jatsxml', 'published')
+    filename = './prepub-test.json'
+    assert Path(filename).exists()
+    json_data = json.load(Path(filename).open())
+    result = np.array(process_data(json_data, 'collection', keys, 0))
+
+    return result
+
+
+def test_receive_initial_version(prepub_test_file, prepub_query):
+    df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.get_col_names()))
+    for row in range(len(df)):
+        create_article(doi=df.loc[str(row), 'DOI'],
+                       title=df.loc[str(row), 'Title'],
+                       authors=df.loc[str(row), 'Authors'],
+                       corr_authors=df.loc[str(row), 'Corresponding_Authors'],
+                       institution=df.loc[str(row), 'Institution'],
+                       date=df.loc[str(row), 'Date'],
+                       version=df.loc[str(row), 'Version'],
+                       type=df.loc[str(row), 'Type'],
+                       category=df.loc[str(row), 'Category'],
+                       xml=df.loc[str(row), 'Xml'],
+                       pub_doi=df.loc[str(row), 'Published'])
+
+    missings: List[str] = receive_missing_initial_version_list()
+    url = 'https://api.biorxiv.org/details/biorxiv/'
+    articles: List[Article] = []
+    for missing in missings:
+        query = Query(url + missing + '/', prepub_query.get_keys(), prepub_query.get_col_names())
+        result = get_json_data(0, 0, query)[1]
+        result = np.array(process_data(result.get_result(), 'collection', prepub_query.get_keys(), 0))
+        df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
+        for row in range(len(df)):
+            articles.append(create_article(doi=df.loc[str(row), 'DOI'],
+                                           title=df.loc[str(row), 'Title'],
+                                           authors=df.loc[str(row), 'Authors'],
+                                           corr_authors=df.loc[str(row), 'Corresponding_Authors'],
+                                           institution=df.loc[str(row), 'Institution'],
+                                           date=df.loc[str(row), 'Date'],
+                                           version=df.loc[str(row), 'Version'],
+                                           type=df.loc[str(row), 'Type'],
+                                           category=df.loc[str(row), 'Category'],
+                                           xml=df.loc[str(row), 'Xml'],
+                                           pub_doi=df.loc[str(row), 'Published']))
+
+        doi: str = articles[0].get_pub_doi()
+        article = PublishedPrepubArticleMediator().get_object(doi)
+        assert article.get_version() == 1
