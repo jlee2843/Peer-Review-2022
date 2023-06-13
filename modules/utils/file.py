@@ -1,4 +1,5 @@
 import datetime
+import numpy as np
 
 from pathlib import Path
 from typing import Union
@@ -60,6 +61,17 @@ def get_filename(path: str = '', ext: str = '.parquet') -> str:
         set_filename(f'{datetime.utcnow().timestamp()}{ext}')
 
     return f'{path}{_filename}'
+
+
+def get_dir_list(directory: Path, pattern: str = '') -> np.ndarray:
+    listing: np.ndarray
+    if pattern == '':
+        listing = np.array(filter(lambda x: x.is_file(), directory.rglob('*')))
+    else:
+        listing = np.array(directory.rglob(pattern))
+
+    return listing
+
 
 # from configparser import ConfigParser
 # from itertools import chain
