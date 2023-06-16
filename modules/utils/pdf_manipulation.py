@@ -1,21 +1,21 @@
 import os
-from io import StringIO
 import re
+from io import StringIO
 from pathlib import Path
+from pprint import pprint
 
-from pdfminer.high_level import extract_text
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams
-from pdfminer.pdfpage import PDFPage
+from pdfminer.high_level import extract_text
 from pdfminer.layout import *
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
 
 
 def extract_fulltext(pdf: Path, layout: LAParams = None):
     return extract_text(pdf, layout)
 
 
-def pdf_to_text(path:Path, layout: LAParams = None):
+def pdf_to_text(path: Path, layout: LAParams = None):
     '''Extract text from pdf documents
     '''
 
@@ -42,7 +42,7 @@ def extraction(split_path, text_path):
     # repeat the process for each entry
     for entry in entries:
 
-        # define a custom list cotain entries files paths
+        # define a custom list contain entries files paths
         custom_list = os.listdir(os.path.join(split_path, entry))
 
         # list must be sorted
@@ -50,7 +50,6 @@ def extraction(split_path, text_path):
 
         # repeat the process for each file path
         for file_path in custom_list:
-
             text_output = pdf_to_text(
                 os.path.join(split_path, entry, file_path))
 
@@ -65,3 +64,42 @@ def extract_elements(pdf: Path, layout: LAParams = None):
     from pdfminer.high_level import extract_pages
 
     return extract_pages(pdf, laparams=layout)
+
+
+def get_element_list(pdf: Path, layout: LAParams = None,
+                     tag: Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage] = LTTextBox) -> List[LTLayoutContainer]:
+    element_list = []
+    for pages in extract_elements(pdf, layout):
+        for element in pages:
+            if isinstance(element, tag):
+                element_list.append(element)
+
+    return element_list
+
+
+def get_string_occurrence(element_list: Iterator[LTTextContainer], string: str, sep: str = '.') -> int:
+    occurrence_list = []
+    for element in element_list:
+        txt = element.get_text().strip().lower()
+        if txt.startswith(string):
+            occurrence_list.append(txt.split(sep)[0])
+
+    return len(set(occurrence_list))
+
+
+if __name__ == "__main__":
+    test = Path('../../data/example.pdf')
+    pprint(list(get_element_list(test)))
+    lst = []
+    for pages in extract_elements(test):
+        for el in pages:
+            if isinstance(el, LTTextBox):
+                tmp = el.get_text()
+                if tmp.strip().lower().startswith('figure '):
+                    # pprint(tmp)
+                    pprint(tmp.split('.')[0])
+                    lst.append(tmp.split('.')[0])
+
+                # pprint(element)
+
+    pprint(f'{len(set(lst))}\n{set(lst)}')
