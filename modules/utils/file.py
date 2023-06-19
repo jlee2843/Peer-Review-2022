@@ -1,10 +1,9 @@
 import datetime
-from io import IOBase, StringIO
-
-import numpy as np
-
+from io import StringIO
 from pathlib import Path
 from typing import Union
+
+import numpy as np
 
 _basePathName: Union[str, None] = None
 _path: Union[str, None] = None
@@ -76,8 +75,12 @@ def get_dir_list(directory: Path, pattern: str = '') -> np.ndarray:
 
 
 def save_stringio(file: Path, iostream: StringIO):
+    save_text(file, iostream.getvalue())
+
+
+def save_text(file: Path, text: str):
     with open(file, "a") as output_stream:
-        output_stream.write(iostream.getvalue())
+        output_stream.write(text)
         output_stream.flush()
         output_stream.close()
 
