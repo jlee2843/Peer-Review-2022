@@ -5,14 +5,22 @@ from pathlib import Path
 from pprint import pprint
 
 from pdfminer.converter import TextConverter
-from pdfminer.high_level import extract_text
+from pdfminer.high_level import extract_text_to_fp, extract_text
 from pdfminer.layout import *
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 
 
-def extract_fulltext(pdf: Path, layout: LAParams = None):
-    return extract_text(pdf, layout)
+def extract_fulltext(pdf: Path, layout: LAParams = None, file: Path = None) -> str:
+    from modules.utils.file import save_stringio
+
+    doc: StringIO = StringIO()
+    with open(str(pdf), 'rb') as original_file:
+        extract_text_to_fp(inf=original_file, outfp=doc, laparams=layout)
+
+    if file is not None:
+        save_stringio(str(file), doc)
+    return doc.getvalue()
 
 
 def pdf_to_text(path: Path, layout: LAParams = None):
@@ -67,11 +75,12 @@ def extract_elements(pdf: Path, layout: LAParams = None):
 
 
 def get_element_list(pdf: Path, layout: LAParams = None,
-                     tag: Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage] = LTTextBox) -> List[LTLayoutContainer]:
+                     tag: Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage, None] = LTTextBox) -> List[
+    LTLayoutContainer]:
     element_list = []
     for pages in extract_elements(pdf, layout):
         for element in pages:
-            if isinstance(element, tag):
+            if (tag is None) or isinstance(element, tag):
                 element_list.append(element)
 
     return element_list
@@ -89,10 +98,16 @@ def get_string_occurrence(element_list: Iterator[LTTextContainer], string: str, 
 
 if __name__ == "__main__":
     test = Path('../../data/example.pdf')
+    setting = LAParams(boxes_flow=0.0, detect_vertical=True)
+    # tmp = extract_fulltext(test)
+    # pprint(tmp)
+    pprint(extract_text(test, laparams=setting))
+    pprint(list(get_element_list(pdf=test, layout=setting, tag=LTTextBox)))
+'''
     pprint(list(get_element_list(test)))
     lst = []
-    for pages in extract_elements(test):
-        for el in pages:
+    for g_pages in extract_elements(test):
+        for el in g_pages:
             if isinstance(el, LTTextBox):
                 tmp = el.get_text()
                 if tmp.strip().lower().startswith('figure '):
@@ -103,3 +118,4 @@ if __name__ == "__main__":
                 # pprint(element)
 
     pprint(f'{len(set(lst))}\n{set(lst)}')
+'''

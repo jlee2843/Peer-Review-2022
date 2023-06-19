@@ -1,4 +1,6 @@
 import datetime
+from io import IOBase, StringIO
+
 import numpy as np
 
 from pathlib import Path
@@ -72,6 +74,12 @@ def get_dir_list(directory: Path, pattern: str = '') -> np.ndarray:
 
     return listing
 
+
+def save_stringio(file: Path, iostream: StringIO):
+    with open(file, "a") as output_stream:
+        output_stream.write(iostream.getvalue())
+        output_stream.flush()
+        output_stream.close()
 
 # from configparser import ConfigParser
 # from itertools import chain
