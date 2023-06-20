@@ -1,17 +1,17 @@
-import datetime
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Union
 
 import numpy as np
 
-_basePathName: Union[str, None] = None
+_base_path_name: Union[str, None] = None
 _path: Union[str, None] = None
 _filename: Union[str, None] = None
 
 
 def set_base_path_name(base_path: str) -> None:
-    global _basePathName
+    global _base_path_name
 
     if not base_path.endswith('/'):
         base_path = base_path + '/'
