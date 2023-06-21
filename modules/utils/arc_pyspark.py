@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Optional, IO
+from subprocess import CalledProcessError
+from typing import Optional, IO, List, Tuple
 
 import matplotlib.pyplot as plt
 import networkx as nx
 from pyspark import SparkContext
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql._typing import UserDefinedFunctionLike
 from pyspark.sql.functions import udf
 from pyspark.sql.types import StringType
 
@@ -23,7 +23,7 @@ def get_slurm_id() -> str:
     try:
         slurm_id = subprocess.Popen("squeue -u $USER | tail -1 | awk {'print $1'}", shell=True,
                                     stdout=subprocess.PIPE).stdout
-    except Exception:
+    except (OSError, ValueError, CalledProcessError, Exception):
         slurm_id = subprocess.Popen("ssh -f arc squeue -u $USER | tail -1 | awk {'print $1'}", shell=True,
                                     stdout=subprocess.PIPE).stdout
     return str(slurm_id.read().rstrip(), 'utf-8')
@@ -37,7 +37,8 @@ def get_slurm_dir() -> Path:
 def get_spark_sql_context(pyfiles: str) -> tuple[SparkContext, SparkSession]:
     import os
 
-    config_lines = [tuple(a.rstrip().split(" ")) for a in open(os.environ['SPARK_CONFIG_FILE']).readlines()]
+    config_lines: List[Tuple] = [tuple(a.rstrip().split(" ")) for a in
+                                 open(os.environ['SPARK_CONFIG_FILE']).readlines()]
     conf = SparkConf()
     conf.setAll(config_lines)
     conf.setMaster("spark://%s:%s" % (os.environ['SPARK_MASTER_HOST'], os.environ['SPARK_MASTER_PORT']))
@@ -112,5 +113,5 @@ def upper_case(x: str) -> str:
     return x.strip().upper()
 
 
-upperCaseUDF: UserDefinedFunctionLike = udf(lambda x: upper_case(x), StringType())
-titleCaseUDF: UserDefinedFunctionLike = udf(lambda x: title_case(x), StringType())
+upperCaseUDF = udf(lambda x: upper_case(x), StringType())
+titleCaseUDF = udf(lambda x: title_case(x), StringType())

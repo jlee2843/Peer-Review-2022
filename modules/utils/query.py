@@ -39,7 +39,7 @@ def get_json_data(counter: int, cursor: int, query: Query) -> Tuple[int, Query]:
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
-    result: Any
+    result: Any = None
     valid = ['text', 'content', 'json']
     attr = attr.strip().lower()
 
@@ -50,8 +50,9 @@ def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
             raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
 
         result = getattr(connect_url(counter, url), attr)
-        return result()
     except TypeError:
+        pass
+    finally:
         return result
 
 
@@ -92,7 +93,7 @@ def get_value(data: dict, key: str):
         return result
 
 
-def convert_date(value: str) -> datetime:
+def convert_date(value: str):
     try:
         return datetime.strptime(value.strip().split(':')[0], '%Y-%m-%d')
     except Exception as e:

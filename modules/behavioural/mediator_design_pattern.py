@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Tuple, Union
+from typing import Dict, Any, Tuple, Union
 
 import pyspark
 from pyspark.sql import SparkSession

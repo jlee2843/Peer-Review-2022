@@ -6,7 +6,16 @@ from typing import Optional, List
 
 class FactoryInstantiationClass(ABC):
     def __init__(self, *args, **kwargs):
-        self.__init__(factory=False, *args, **kwargs)
+        factory = kwargs['factory'] if isinstance(kwargs['factory'], bool) else False
+        tmp = args[0] if len(args) > 0 else False
+        factory = factory or tmp
+
+        if factory:
+            self._create_object(*args, **kwargs)
+        else:
+            raise RuntimeError('Please instantiate class through the corresponding Factory')
+
+        # self.__init__(factory=False, *args, **kwargs)
 
     def __init__(self, factory: bool = False, *args: object, **kwargs: object) -> None:
         if factory:

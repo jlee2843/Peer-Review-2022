@@ -23,9 +23,9 @@ def prepub_test_file():
 
 
 def load_article_factory_dataframe(result: np.ndarray,
-                                   col_names=["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
+                                   col_names=("DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
                                               "Version", "Type",
-                                              "Category", "Xml", "Published"]) -> pd.DataFrame:
+                                              "Category", "Xml", "Published")) -> pd.DataFrame:
     df: pd.DataFrame = create_prepublish_df(create_df(result, col_names))
     for row in range(len(df)):
         # doi = df.loc[str(row), 'DOI']

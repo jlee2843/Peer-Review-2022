@@ -3,6 +3,7 @@ import re
 from io import StringIO
 from pathlib import Path
 from pprint import pprint
+from typing import Type
 
 from pdfminer.converter import TextConverter
 from pdfminer.high_level import extract_text_to_fp, extract_text
@@ -19,7 +20,7 @@ def extract_fulltext(pdf: Path, layout: LAParams = None, file: Path = None) -> s
         extract_text_to_fp(inf=original_file, outfp=doc, laparams=layout)
 
     if file is not None:
-        save_stringio(str(file), doc)
+        save_stringio(file, doc)
     return doc.getvalue()
 
 
@@ -59,7 +60,7 @@ def extraction(split_path, text_path):
         # repeat the process for each file path
         for file_path in custom_list:
             text_output = pdf_to_text(
-                os.path.join(split_path, entry, file_path))
+                Path(os.path.join(split_path, entry, file_path)))
 
             # save text file of each entry
             with open(os.path.join(text_path, f"{entry}.txt"),
@@ -75,8 +76,8 @@ def extract_elements(pdf: Path, layout: LAParams = None):
 
 
 def get_element_list(pdf: Path, layout: LAParams = None,
-                     tag: Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage, None] = LTTextBox) -> List[
-    LTLayoutContainer]:
+                     tag: Type[Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage, None]] = LTTextBox) -> \
+        List[LTComponent]:
     element_list = []
     for pages in extract_elements(pdf, layout):
         for element in pages:
