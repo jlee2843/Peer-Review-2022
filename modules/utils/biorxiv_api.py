@@ -39,7 +39,7 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         df.Authors = df.Authors.astype('str').map(lambda x: x.strip())
         df.Corresponding_Authors = df.Corresponding_Authors.astype('str').map(lambda x: x.strip())
         df.Institution = df.Institution.map(lambda x: x.strip().upper()).astype('category')
-        df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64')
+        df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64[ns]')
         df.Version = df.Version.astype('int32')
         df.Type = df.Type.map(lambda x: x.strip().lower()).astype('category')
         df.Category = df.Category.map(lambda x: x.strip().title()).astype('category')
