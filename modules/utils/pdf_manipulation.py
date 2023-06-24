@@ -97,13 +97,28 @@ def get_string_occurrence(element_list: Iterator[LTTextContainer], string: str, 
     return len(set(occurrence_list))
 
 
+def compare_pdf_tags(e1: LTComponent, e2: LTComponent) -> bool:
+    result = e1.x0 < e2.x0
+    if e1.x0 == e2.x0:
+        result = e1.y0 > e2.y0
+
+    return result
+
+
 if __name__ == "__main__":
     test = Path('../../data/example.pdf')
-    setting = LAParams(boxes_flow=0.0, detect_vertical=True)
+    setting = LAParams(boxes_flow=-0.5, detect_vertical=True)
     # tmp = extract_fulltext(test)
     # pprint(tmp)
+
     pprint(extract_text(test, laparams=setting))
-    pprint(list(get_element_list(pdf=test, layout=setting, tag=LTTextBox)))
+    results = list(get_element_list(pdf=test, layout=setting, tag=LTTextBox))
+    pprint(results)
+    from operator import itemgetter, attrgetter
+
+    sorted_results = sorted(results, key=attrgetter('x0'))
+    sorted_results = sorted(sorted_results, key=attrgetter('y0'), reverse=True)
+    pprint(sorted_results)
 '''
     pprint(list(get_element_list(test)))
     lst = []
