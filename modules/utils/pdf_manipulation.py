@@ -77,14 +77,17 @@ def extract_elements(pdf: Path, layout: LAParams = None):
 
 def get_element_list(pdf: Path, layout: LAParams = None,
                      tag: Type[Union[LTTextBox, LTFigure, LTLine, LTRect, LTImage, None]] = LTTextBox) -> \
-        List[LTComponent]:
-    element_list = []
+        List[List[LTComponent]]:
+    doc = []
     for pages in extract_elements(pdf, layout):
+        element_list = []
         for element in pages:
             if (tag is None) or isinstance(element, tag):
                 element_list.append(element)
 
-    return element_list
+        doc.append(element_list)
+
+    return doc
 
 
 def get_string_occurrence(element_list: Iterator[LTTextContainer], string: str, sep: str = '.') -> int:
@@ -114,7 +117,7 @@ if __name__ == "__main__":
     pprint(extract_text(test, laparams=setting))
     results = list(get_element_list(pdf=test, layout=setting, tag=LTTextBox))
     pprint(results)
-    from operator import itemgetter, attrgetter
+    from operator import attrgetter
 
     sorted_results = sorted(results, key=attrgetter('x0'))
     sorted_results = sorted(sorted_results, key=attrgetter('y0'), reverse=True)
