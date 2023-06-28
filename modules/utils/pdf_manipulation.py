@@ -108,6 +108,12 @@ def compare_pdf_tags(e1: LTComponent, e2: LTComponent) -> bool:
     return result
 
 
+def sort_pdf_tags(layout: List[List[LTComponent]], attr: str, reverse: bool = False) -> List[List[LTComponent]]:
+    from operator import attrgetter
+
+    return [sorted(page, key=attrgetter(attr), reverse=reverse) for page in layout]
+
+
 if __name__ == "__main__":
     test = Path('../../data/example.pdf')
     setting = LAParams(boxes_flow=-0.5, detect_vertical=True)
@@ -116,12 +122,17 @@ if __name__ == "__main__":
 
     pprint(extract_text(test, laparams=setting))
     results = list(get_element_list(pdf=test, layout=setting, tag=LTTextBox))
-    pprint(results)
-    from operator import attrgetter
+    default = list(get_element_list(pdf=test, tag=LTTextBox))
+    for page, _ in enumerate(default):
+        print(f'*** Page {page + 1} ***\nNumber of Tags in default {len(default[page])} '
+              f'Number of tags in result {len(results[page])}')
+        pprint([(default.__getitem__(page).__getitem__(num), result) for num, result in enumerate(results[page]) if
+                default.__getitem__(page).__getitem__(num).bbox != result.bbox])
 
-    sorted_results = sorted(results, key=attrgetter('x0'))
-    sorted_results = sorted(sorted_results, key=attrgetter('y0'), reverse=True)
-    pprint(sorted_results)
+    # sorted_results = sort_pdf_tags(results, attr='y0', reverse=True)  # secondary key
+    # pprint(sorted_results)
+    # sorted_results = sort_pdf_tags(sorted_results, attr='x0')  # primary key
+    # pprint(sorted_results)
 '''
     pprint(list(get_element_list(test)))
     lst = []
