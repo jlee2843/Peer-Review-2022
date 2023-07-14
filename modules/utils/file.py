@@ -1,9 +1,10 @@
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Union
+from typing import Union, Dict
 
 import numpy as np
+from configobj import ConfigObj
 
 _base_path_name: Union[str, None] = None
 _path: Union[str, None] = None
@@ -84,6 +85,23 @@ def save_text(file: Path, text: str):
         output_stream.flush()
         output_stream.close()
 
+
+def assign_values(config: ConfigObj, params: dict) -> ConfigObj
+    for param in params.keys():
+        config[param] = params.get(param)
+
+    return config
+
+
+def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, dict]):
+    config: ConfigObj = ConfigObj()
+    config.filename = file
+    config = assign_values(config, params.pop(''))
+    config = assign_values(config, params)
+    config.write()
+
+
+def read_config_file(file: Path)
 # from configparser import ConfigParser
 # from itertools import chain
 
