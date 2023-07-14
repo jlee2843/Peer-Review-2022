@@ -86,7 +86,7 @@ def save_text(file: Path, text: str):
         output_stream.close()
 
 
-def assign_values(config: ConfigObj, params: dict) -> ConfigObj
+def assign_values(config: ConfigObj, params: dict) -> ConfigObj:
     for param in params.keys():
         config[param] = params.get(param)
 
