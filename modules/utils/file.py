@@ -93,15 +93,31 @@ def assign_values(config: ConfigObj, params: dict) -> ConfigObj
     return config
 
 
-def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, dict]):
+def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, dict]) -> dict:
+    """
+
+    :param file:
+    :param params:
+    :param comments: a dictionary that contain <command to execute, dictionary of <section, comment> or comments>
+    :return:
+    """
+
     config: ConfigObj = ConfigObj()
     config.filename = file
     config = assign_values(config, params.pop(''))
     config = assign_values(config, params)
     config.write()
 
+    return config
 
-def read_config_file(file: Path)
+
+def read_config_file(file: Path):
+    pass
+
+
+def output_comments(config: ConfigObj, command: str, data: Union[Dict, str]) -> ConfigObj:
+    pass
+
 # from configparser import ConfigParser
 # from itertools import chain
 
