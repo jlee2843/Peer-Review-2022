@@ -115,8 +115,10 @@ def read_config_file(file: Path):
     pass
 
 
-def output_comments(config: ConfigObj, command: str, data: Union[Dict, str]) -> ConfigObj:
-    pass
+def output_comments(config: ConfigObj, attribute: str, key: str, data: Union[Dict, str]) -> ConfigObj:
+    setattr(config[key], attribute, data.get(key))
+
+    return config
 
 # from configparser import ConfigParser
 # from itertools import chain
