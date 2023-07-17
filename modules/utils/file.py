@@ -1,11 +1,13 @@
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from pprint import pprint
+from threading import Lock
 from typing import Union, Dict
 
 import numpy as np
 from configobj import ConfigObj
+
+from modules.building_block import Singleton
 
 _base_path_name: Union[str, None] = None
 _path: Union[str, None] = None
@@ -119,8 +121,8 @@ def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, 
     return config
 
 
-def read_config_file(file: Path):
-    pass
+def read_config_file(file: str):
+    Settings.set_config_object(ConfigObj(file))
 
 
 def output_comments(config: ConfigObj, attribute: str, key: str, data: dict) -> ConfigObj:
@@ -164,23 +166,18 @@ def process_comments(config: ConfigObj, comments: dict) -> ConfigObj:
 #    lines = chain(("[top]",), lines)  # This line does the trick.
 #    parser.read_file(lines)
 
+class Settings(metaclass=Singleton):
+    _config_object: ConfigObj
+    _lock: Lock = Lock()
+
+    def set_config_object(self, config: ConfigObj):
+        with self._lock:
+            self._config_object = config
+
+    def get_value(self, key: str) -> str:
+        with self._lock:
+            return self._config_object.get(key)
+
 
 if __name__ == "__main__":
-    config1 = ConfigObj()
-    config1['test'] = {'subsection': {'test1': 'test_1', 'test2': 'test_2'}, 'testing': 'testing_1'}
-    config1['global'] = {'testing_A': 'A'}
-    # config.inline_comments = {'global', 'this is a test'}
-    getattr(config1, 'comments')['test'] = ['this is a test for test', 'testing out the comment feature of ConfigObj']
-    getattr(config1['test']['subsection'], 'inline_comments')['test1'] = 'testing test_1'
-    tmp = config1['test']['subsection']
-    getattr(tmp, 'inline_comments')['test2'] = 'testing test_2'
-    getattr(config1['global'], 'inline_comments')['testing_A'] = 'testing testing_1'
-    config1.filename = '../../data/testing.ini'
-    config1.write()
-    pprint(f'comment\n{config1.comments}')
-    pprint(f'inline\n{config1.inline_comments}')
-    print(f'struct\n{config1}')
-
-    test_config = ConfigObj('../../data/testing.ini')
-    pprint(f'read in\n{test_config}')
-    pprint(test_config.comments)
+    pass

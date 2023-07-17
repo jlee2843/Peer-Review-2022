@@ -47,3 +47,8 @@ def test_comments(data_pair: ConfigObj):
 
     assert config.comments == data_pair.comments
     assert config.inline_comments == data_pair.inline_comments
+
+
+def test_config_import(data_pair: ConfigObj):
+    config: ConfigObj = ConfigObj("../../data/tmp.ini")
+    assert config == data_pair
