@@ -124,14 +124,12 @@ def read_config_file(file: Path):
 
 
 def output_comments(config: ConfigObj, attribute: str, key: str, data: dict) -> ConfigObj:
-    for value in data.get(key):
-        if type(value) is str:
-            getattr(config, attribute)[key] = value
-        elif type(value) is dict:
-            for inner_key in value.keys():
-                output_comments(config[key], attribute, inner_key, value)
-        else:
-            raise TypeError('output_comments expected either a str or dic as data')
+    value = data.get(key)
+    if type(data.get(key)) is dict:
+        for inner_key in value.keys():
+            output_comments(config[key], attribute, inner_key, value)
+    else:
+        getattr(config, attribute)[key] = value
 
     return config
 
