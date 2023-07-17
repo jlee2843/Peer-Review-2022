@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from pprint import pprint
 from typing import Union, Dict
 
 import numpy as np
@@ -95,7 +96,9 @@ def assign_values(config: ConfigObj, params: dict) -> ConfigObj:
 
 def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, dict]) -> dict:
     """
+    The structure of the comments dictionary is <attribute, <'' or section_name, <keyword , comment>
 
+    the structure of parameter is <'' or section_name, <keyword, value>
     :param file:
     :param params:
     :param comments: a dictionary that contain <command to execute, dictionary of <section, comment> or comments>
@@ -104,8 +107,13 @@ def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, 
 
     config: ConfigObj = ConfigObj()
     config.filename = file
-    config = assign_values(config, params.pop(''))
+    keywords = params.pop('', None)
+    if keywords is not None:
+        config = assign_values(config, keywords)
+
     config = assign_values(config, params)
+
+    config = process_comments(config, comments)
     config.write()
 
     return config
@@ -115,10 +123,34 @@ def read_config_file(file: Path):
     pass
 
 
-def output_comments(config: ConfigObj, attribute: str, key: str, data: Union[Dict, str]) -> ConfigObj:
-    setattr(config[key], attribute, data.get(key))
+def output_comments(config: ConfigObj, attribute: str, key: str, data: dict) -> ConfigObj:
+    for value in data.get(key):
+        setattr(config[key], attribute, value)
 
     return config
+
+
+def process_comments(config: ConfigObj, comments: dict) -> ConfigObj:
+    """
+    The structure of the comments dictionary is <attribute, <'' or section_name, [comment or <keyword , comment]>
+
+    :param config:
+    :param comments:
+    :return:
+    """
+
+    for attribute in comments.keys():
+        comment_info: Dict[str, dict] = comments.get(attribute)
+        keywords = comment_info.pop('', None)
+        if keywords is not None:
+            for keyword in keywords.keys():
+                config = output_comments(config, attribute, keyword, keywords)
+
+        for section in comment_info.keys():
+            config = output_comments(config, attribute, section, comment_info)
+
+    return config
+
 
 # from configparser import ConfigParser
 # from itertools import chain
@@ -127,3 +159,21 @@ def output_comments(config: ConfigObj, attribute: str, key: str, data: Union[Dic
 # with open("foo.conf") as lines:
 #    lines = chain(("[top]",), lines)  # This line does the trick.
 #    parser.read_file(lines)
+
+
+if __name__ == "__main__":
+    config1 = ConfigObj()
+    config1['test'] = {'subsection': {'test1': 'test_1'}, 'testing': 'testing_1'}
+    config1['global'] = {'testing_A': 'A'}
+    # config.inline_comments = {'global', 'this is a test'}
+    getattr(config1, 'comments')['test'] = ['this is a test for test']
+    getattr(config1['test']['subsection'], 'inline_comments')['test1'] = 'testing test_1'
+    getattr(config1['global'], 'inline_comments')['testing_A'] = 'testing testing_1'
+    config1.filename = '../../data/testing.ini'
+    config1.write()
+    pprint(f'inline\n{config1.inline_comments}')
+    print(f'struct\n{config1}')
+
+    test_config = ConfigObj('../../data/config.ini')
+    pprint(test_config)
+    pprint(test_config.comments)

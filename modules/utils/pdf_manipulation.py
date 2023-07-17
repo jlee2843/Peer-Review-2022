@@ -133,6 +133,12 @@ if __name__ == "__main__":
     # pprint(sorted_results)
     # sorted_results = sort_pdf_tags(sorted_results, attr='x0')  # primary key
     # pprint(sorted_results)
+
+    import orcid
+
+    api = orcid.PublicAPI('APP-J7T538D0A2YJ00WH', 'cdd5a0a6-7c92-4c26-a145-5549b6562710')
+    search_token = api.get_search_token_from_orcid()
+    pprint(search_token)
 '''
     pprint(list(get_element_list(test)))
     lst = []
