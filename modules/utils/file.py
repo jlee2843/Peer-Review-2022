@@ -2,7 +2,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from threading import Lock
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 
 import numpy as np
 from configobj import ConfigObj
@@ -96,7 +96,7 @@ def assign_values(config: ConfigObj, params: dict) -> ConfigObj:
     return config
 
 
-def create_config_file(file: Path, params: Dict[str, dict], comments: Dict[str, dict]) -> dict:
+def create_config_file(file: str, params: Dict[str, dict], comments: Dict[str, dict]) -> ConfigObj:
     """
     The structure of the comments dictionary is <attribute, <'' or section_name, <keyword , comment>
 
@@ -167,16 +167,29 @@ def process_comments(config: ConfigObj, comments: dict) -> ConfigObj:
 #    parser.read_file(lines)
 
 class Settings(metaclass=Singleton):
-    _config_object: ConfigObj
+    _config_object: ConfigObj = ConfigObj()
     _lock: Lock = Lock()
+
+    def __init(self, config: ConfigObj):
+        self.set_config_object(config)
 
     def set_config_object(self, config: ConfigObj):
         with self._lock:
             self._config_object = config
 
-    def get_value(self, key: str) -> str:
+    def get_value(self, key: str, section: Optional[str] = None, subsection: Optional[str] = None) -> Union[str, None]:
+        value: Union[str, None] = None
+
         with self._lock:
-            return self._config_object.get(key)
+            if section is not None:
+                if subsection is not None:
+                    value = self._config_object[section][subsection][key]
+                else:
+                    value = self._config_object[section][key]
+            else:
+                value = self._config_object[key]
+
+        return value
 
 
 if __name__ == "__main__":

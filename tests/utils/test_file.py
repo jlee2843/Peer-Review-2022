@@ -52,3 +52,11 @@ def test_comments(data_pair: ConfigObj):
 def test_config_import(data_pair: ConfigObj):
     config: ConfigObj = ConfigObj("../../data/tmp.ini")
     assert config == data_pair
+
+
+def test_retrieve_value(data_pair):
+    data = {'test': {'subsection': {'test1': 'test_1', 'test2': 'test_2'}, 'testing': 'testing_1'},
+            'global': {'testing_A': 'A'}}
+
+    config: ConfigObj = ConfigObj("../../data/tmp.ini")
+    assert data.get('test').get('subsection').get('test2') == config['test']['subsection']['test2']
