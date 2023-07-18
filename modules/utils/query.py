@@ -45,11 +45,13 @@ def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
 
     try:
         if attr in valid:
-            pass
+            if attr == 'json':
+                result = getattr(connect_url(counter, url), attr)()
+            else:
+                result = getattr(connect_url(counter, url), attr)
         else:
             raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
 
-        result = getattr(connect_url(counter, url), attr)
     except TypeError:
         pass
     finally:

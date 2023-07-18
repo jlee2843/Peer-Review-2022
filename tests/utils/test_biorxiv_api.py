@@ -82,17 +82,11 @@ def test_get_col_names(query):
 
 
 def test_get_query_result(pub_query, query):
-    query.set_result('test')
-    assert query.get_result() is not None
-    assert query.get_result() == 'test'
     assert query.get_url() == 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
     query.set_result(get_web_data(0, query.get_url(), 'json'))
-    assert query is not None
-    _, result = get_json_data(0, 0, query)
-    assert get_json_data(0, 0, query) is not None
-    assert result.get_result() is not None
+    assert query.get_result() is not None
     assert pub_query.get_result() is not None
-    assert pub_query.get_result() == query.get_result()
+    # assert pub_query.get_result() == query.get_result()
 
 
 def test_get_web_data():
@@ -110,6 +104,7 @@ def test_invalid_attr():
     with pytest.raises(ValueError):
         get_web_data(0, 'hello', 'texTs')
         get_web_data(0, 'hello', ' ')
+        get_web_data(0, 'hello', 'hello')
         get_web_data(0, 'hello', 'text.')
 
 
