@@ -39,18 +39,26 @@ def get_json_data(counter: int, cursor: int, query: Query) -> Tuple[int, Query]:
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
+    """
+
+    :param counter:
+    :param url:
+    :param attr:
+    :return:
+    """
     result: Any = None
     valid = ['text', 'content', 'json']
     attr = attr.strip().lower()
 
+    if attr not in valid:
+        print(f'attr: {attr}')
+        raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
+
     try:
-        if attr in valid:
-            if attr == 'json':
-                result = getattr(connect_url(counter, url), attr)()
-            else:
-                result = getattr(connect_url(counter, url), attr)
+        if attr == 'json':
+            result = getattr(connect_url(counter, url), attr)()
         else:
-            raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
+            result = getattr(connect_url(counter, url), attr)
 
     except TypeError:
         pass
@@ -117,4 +125,8 @@ def flatten(y):
 def create_df(x: np.ndarray, y: List):
     return pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
 
+
 # create_df = lambda x, y: pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
+
+if __name__ == '__main__':
+    get_web_data(counter=0, url='hello', attr='.')

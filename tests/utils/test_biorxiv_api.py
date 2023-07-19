@@ -102,10 +102,10 @@ def test_get_web_data():
 
 def test_invalid_attr():
     with pytest.raises(ValueError):
-        get_web_data(0, 'hello', 'texTs')
-        get_web_data(0, 'hello', ' ')
-        get_web_data(0, 'hello', 'hello')
-        get_web_data(0, 'hello', 'text.')
+        get_web_data(counter=0, url='hello', attr='texTs')
+        get_web_data(counter=0, url='hello', attr=' ')
+        get_web_data(counter=0, url='hello', attr='hello')
+        get_web_data(counter=0, url='hello', attr='.')
 
 
 def test_valid_attr(query):

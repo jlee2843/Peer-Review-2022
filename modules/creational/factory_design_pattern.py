@@ -21,12 +21,11 @@ class Factory(metaclass=Singleton):
 
     def _add_object(self, identifier: str, new_object: Any) -> bool:
         result = False
-        with self._lock:
-            if self._factory_map.get(identifier) is None:
-                result = True
-                self._factory_map[identifier] = new_object
+        if self._factory_map.get(identifier) is None:
+            result = True
+            self._factory_map[identifier] = new_object
 
-            return result
+        return result
 
     def get_object(self, identifier: str) -> Any:
         with self._lock:
