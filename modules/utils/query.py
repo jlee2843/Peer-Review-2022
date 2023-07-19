@@ -51,7 +51,6 @@ def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
     attr = attr.strip().lower()
 
     if attr not in valid:
-        print(f'attr: {attr}')
         raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
 
     try:

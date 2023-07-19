@@ -1,3 +1,4 @@
+from threading import RLock
 from typing import Dict, Any, Set
 
 from sortedcontainers import SortedList
@@ -7,25 +8,17 @@ from modules.building_block import *
 
 class Factory(metaclass=Singleton):
     _factory_map: Dict[Any, Any] = {}
-    _lock: Lock = Lock()
+    _lock: RLock = RLock()
 
     def create_object(self, identifier: str, class_path: str, *args, **kwargs) -> Any:
         with self._lock:
             kwargs.update(doi=identifier)
-            new_object = Factory.import_class(class_path)(True, *args, **kwargs)
+            new_object = self._factory_map.get(identifier)
 
-            if self._add_object(identifier, new_object) is False:
-                new_object = self.get_object(identifier)
-
+            if new_object is None:
+                new_object = Factory.import_class(class_path)(True, *args, **kwargs)
+                self._factory_map[identifier] = new_object
         return new_object
-
-    def _add_object(self, identifier: str, new_object: Any) -> bool:
-        result = False
-        if self._factory_map.get(identifier) is None:
-            result = True
-            self._factory_map[identifier] = new_object
-
-        return result
 
     def get_object(self, identifier: str) -> Any:
         with self._lock:
