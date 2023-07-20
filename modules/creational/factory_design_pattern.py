@@ -18,11 +18,11 @@ class Factory(metaclass=Singleton):
             if new_object is None:
                 new_object = Factory.import_class(class_path)(True, *args, **kwargs)
                 self._factory_map[identifier] = new_object
+
         return new_object
 
     def get_object(self, identifier: str) -> Any:
-        with self._lock:
-            return self._factory_map.get(identifier)
+        return self._factory_map.get(identifier)
 
     @staticmethod
     def import_class(path: str) -> object:
@@ -83,6 +83,7 @@ class ArticleFactory(Factory):
         result: Optional[SortedList] = self._factory_map.get(identifier)
         if result is not None:
             result = result.__getitem__(0)
+
         return result
 
     def add_publication_list(self, article: Article):
