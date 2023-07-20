@@ -14,7 +14,7 @@ from modules.utils.query import create_df
 def prepub_test_file():
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
-    filename = Path('./prepub-test.json').absolute()
+    filename = Path('../utils/prepub-test.json').absolute()
     assert filename.exists()
     json_data = json.load(filename.open())
     result = np.array(process_data(json_data, 'collection', keys, 0))

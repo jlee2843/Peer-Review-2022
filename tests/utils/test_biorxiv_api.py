@@ -236,7 +236,7 @@ def test_receive_initial_version(prepub_test_file, prepub_query):
     url = 'https://api.biorxiv.org/details/biorxiv/'
     articles: List[Article] = []
     for missing in missings:
-        query = Query(url + missing + '/', prepub_query.get_keys(), prepub_query.get_col_names())
+        query = Query(url + missing, prepub_query.get_keys(), prepub_query.get_col_names())
         result = get_json_data(0, 0, query)[1]
         result = np.array(process_data(result.get_result(), 'collection', prepub_query.get_keys(), 0))
         df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))

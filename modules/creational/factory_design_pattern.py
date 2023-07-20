@@ -12,7 +12,7 @@ class Factory(metaclass=Singleton):
 
     def create_object(self, identifier: str, class_path: str, *args, **kwargs) -> Any:
         with self._lock:
-            kwargs.update(doi=identifier)
+            # kwargs.update(doi=identifier)
             new_object = self._factory_map.get(identifier)
 
             if new_object is None:
