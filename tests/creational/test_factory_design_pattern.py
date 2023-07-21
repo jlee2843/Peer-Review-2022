@@ -12,9 +12,15 @@ from modules.utils.query import create_df
 
 @pytest.fixture
 def prepub_test_file():
+    """
+    This uses the pytest.fixture feature to reduce code smells so that the loading and processing of test data
+    is modularized to reduce the chance of bugs.
+
+    :return: the data is formatted into a tabular format with the use of numpy arrays.
+    """
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
-    filename = Path('../utils/prepub-test.json').absolute()
+    filename = Path('../../data/prepub-test.json').absolute()
     assert filename.exists()
     json_data = json.load(filename.open())
     result = np.array(process_data(json_data, 'collection', keys, 0))
