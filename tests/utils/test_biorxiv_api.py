@@ -209,7 +209,7 @@ def prepub_test_file():
 
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
-    filename = './prepub-test.json'
+    filename = '../../data/prepub-test.json'
     assert Path(filename).exists()
     json_data = json.load(Path(filename).open())
     result = np.array(process_data(json_data, 'collection', keys, 0))
