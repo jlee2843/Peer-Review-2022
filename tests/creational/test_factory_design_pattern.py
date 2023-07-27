@@ -30,7 +30,6 @@ def prepub_test_file():
 
 def load_articles(df: pd.DataFrame):
     for row in range(len(df)):
-        # doi = df.loc[str(row), 'DOI']
         create_article(doi=df.loc[str(row), 'DOI'],
                        title=df.loc[str(row), 'Title'],
                        authors=df.loc[str(row), 'Authors'],

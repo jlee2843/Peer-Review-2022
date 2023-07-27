@@ -143,18 +143,14 @@ def test_create_article(prepub_query):
     assert type(prepub_query.get_col_names()) is list
     df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
     for row in range(len(df)):
-        doi = df.loc[str(row), 'DOI']
-        create_article(doi=df.loc[str(row), 'DOI'],
-                       title=df.loc[str(row), 'Title'],
-                       authors=df.loc[str(row), 'Authors'],
-                       corr_authors=df.loc[str(row), 'Corresponding_Authors'],
-                       institution=df.loc[str(row), 'Institution'],
-                       date=df.loc[str(row), 'Date'],
-                       version=df.loc[str(row), 'Version'],
-                       type=df.loc[str(row), 'Type'],
-                       category=df.loc[str(row), 'Category'],
-                       xml=df.loc[str(row), 'Xml'],
-                       pub_doi=df.loc[str(row), 'Published'])
+        row = str(row)
+        doi = df.loc[row, 'DOI']
+        create_article(doi=df.loc[row, 'DOI'], title=df.loc[row, 'Title'],
+                       authors=df.loc[row, 'Authors'], corr_authors=df.loc[row, 'Corresponding_Authors'],
+                       institution=df.loc[row, 'Institution'], date=df.loc[row, 'Date'],
+                       version=df.loc[row, 'Version'], type=df.loc[row, 'Type'],
+                       category=df.loc[row, 'Category'], xml=df.loc[row, 'Xml'],
+                       pub_doi=df.loc[row, 'Published'])
 
         assert doi == '10.1101/2021.04.29.21256344'
         assert ArticleFactory().get_object(identifier=doi) is not None
@@ -230,18 +226,15 @@ def test_receive_initial_version(prepub_test_file, prepub_query):
         result = get_json_data(0, 0, query)[1]
         result = np.array(process_data(result.get_result(), 'collection', prepub_query.get_keys(), 0))
         df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
-        for row in range(len(df)):
-            articles.append(create_article(doi=df.loc[str(row), 'DOI'],
-                                           title=df.loc[str(row), 'Title'],
-                                           authors=df.loc[str(row), 'Authors'],
-                                           corr_authors=df.loc[str(row), 'Corresponding_Authors'],
-                                           institution=df.loc[str(row), 'Institution'],
-                                           date=df.loc[str(row), 'Date'],
-                                           version=df.loc[str(row), 'Version'],
-                                           type=df.loc[str(row), 'Type'],
-                                           category=df.loc[str(row), 'Category'],
-                                           xml=df.loc[str(row), 'Xml'],
-                                           pub_doi=df.loc[str(row), 'Published']))
+        for line in range(len(df)):
+            line = str(line)
+            articles.append(create_article(doi=df.loc[line, 'DOI'], title=df.loc[line, 'Title'],
+                                           authors=df.loc[line, 'Authors'],
+                                           corr_authors=df.loc[line, 'Corresponding_Authors'],
+                                           institution=df.loc[line, 'Institution'], date=df.loc[line, 'Date'],
+                                           version=df.loc[line, 'Version'], type=df.loc[line, 'Type'],
+                                           category=df.loc[line, 'Category'], xml=df.loc[line, 'Xml'],
+                                           pub_doi=df.loc[line, 'Published']))
 
         doi: str = articles[0].get_pub_doi()
         article = PublishedPrepubArticleMediator().get_object(doi)
