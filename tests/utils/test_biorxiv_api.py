@@ -218,24 +218,14 @@ def prepub_test_file():
 
 
 def test_receive_initial_version(prepub_test_file, prepub_query):
-    df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.get_col_names()))
-    for row in range(len(df)):
-        create_article(doi=df.loc[str(row), 'DOI'],
-                       title=df.loc[str(row), 'Title'],
-                       authors=df.loc[str(row), 'Authors'],
-                       corr_authors=df.loc[str(row), 'Corresponding_Authors'],
-                       institution=df.loc[str(row), 'Institution'],
-                       date=df.loc[str(row), 'Date'],
-                       version=df.loc[str(row), 'Version'],
-                       type=df.loc[str(row), 'Type'],
-                       category=df.loc[str(row), 'Category'],
-                       xml=df.loc[str(row), 'Xml'],
-                       pub_doi=df.loc[str(row), 'Published'])
+    from tests.creational.test_factory_design_pattern import load_articles
 
-    missings: List[str] = receive_missing_initial_version_list()
+    df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.get_col_names()))
+    load_articles(df)
+    missing_items: List[str] = receive_missing_initial_version_list()
     url = 'https://api.biorxiv.org/details/biorxiv/'
     articles: List[Article] = []
-    for missing in missings:
+    for missing in missing_items:
         query = Query(url + missing, prepub_query.get_keys(), prepub_query.get_col_names())
         result = get_json_data(0, 0, query)[1]
         result = np.array(process_data(result.get_result(), 'collection', prepub_query.get_keys(), 0))

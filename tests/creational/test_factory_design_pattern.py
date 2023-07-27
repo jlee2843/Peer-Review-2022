@@ -28,11 +28,7 @@ def prepub_test_file():
     return result
 
 
-def load_article_factory_dataframe(result: np.ndarray,
-                                   col_names=("DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
-                                              "Version", "Type",
-                                              "Category", "Xml", "Published")) -> pd.DataFrame:
-    df: pd.DataFrame = create_prepublish_df(create_df(result, col_names))
+def load_articles(df: pd.DataFrame):
     for row in range(len(df)):
         # doi = df.loc[str(row), 'DOI']
         create_article(doi=df.loc[str(row), 'DOI'],
@@ -47,6 +43,13 @@ def load_article_factory_dataframe(result: np.ndarray,
                        xml=df.loc[str(row), 'Xml'],
                        pub_doi=df.loc[str(row), 'Published'])
 
+
+def load_article_factory_dataframe(result: np.ndarray,
+                                   col_names=("DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
+                                              "Version", "Type",
+                                              "Category", "Xml", "Published")) -> pd.DataFrame:
+    df: pd.DataFrame = create_prepublish_df(create_df(result, col_names))
+    load_articles(df)
     return df
 
 
