@@ -1,0 +1,32 @@
+import spacy
+
+nlp = spacy.load("en_core_web_trf")
+
+s = """Cases of a novel type of contagious pneumonia were first discovered a month ago in Wuhan. The Centers for Disease Control and Prevention (CDC) and Chinese health authorities have determined and announced that a novel coronavirus (CoV), denoted as 2019-nCoV, had caused this pneumonia outbreak.1,2 Existing evidence have confirmed the human-to-human transmission of 2019-nCoV.3
+
+We retrospectively collected infection data from 2 January to 22 January at six departments (Respiratory, ICU, Infectious Disease, Hepatobiliary Pancreatic Surgery, Trauma and Microsurgery, and Urology) from Zhongnan Hospital of Wuhan University. Medical staffs in these department follow differential routines of occupational protection: the medical staff in departments of Respiratory, ICU, and Infectious Disease wore N95 respirators, disinfected and clean hands frequently (N95 group); due to people were not enough for the knowledge of the 2019-nCoV in these early days of the pneumonia outbreak, the medical staff in the other three departments wore no medical masks, disinfected and clean hands occasionally (no-mask group). Suspicious cases of 2019-nCoV infection was diagnosed with chest CT and confirmed with molecular diagnosis. In total, 28/58 ([confirmed/suspicious]) 2019-nCoV patients have been diagnosed during the collection period. Patient exposure was significantly higher for the N95 group compared to no-mask group (Table 1) (For confirmed patients: difference: 733%; exposure odds ratio: 8.33)
+
+Among 493 medical staffs, zero out of 278 (([doctors+nurse] 56+222) from the N95 group were infected by 2019-nCoV. In stark contrast, 10 out of 213 (77+136) from the no-mask group were confirmed infected (Table 1). Regardless of significantly lowered exposure, the 2019-nCoV infection rate for medical staff was significantly increased in the no-mask group compared to the N95 respirator group (difference: 4.65%, [95% CI: 1.75%-infinite]; P<2.2e-16) (adjusted odds ratio (OR): 464.82, [95% CI: 97.73-infinite]; P<2.2e-16).
+
+Meanwhile, we analyzed the medical staff infection data from Huangmei People’ s Hospital (12 confirmed patients) and Qichun People’ s Hospital (11 confirmed patients) and have observed the similar phenomenon. None of medical staff wearing the N95 respirators and follow frequent routines of disinfection with hand washing were infected by 2019-nCoV.
+
+A randomized clinical trial has reported N95 respirators vs medical masks as worn by participants in this trial resulted in no significant difference in the incidence of laboratory confirmed influenza.4 In our study, we found N95 respirators, disinfection and hand washing can help to reduce the risk of 2019-nCoV infection in medical staffs. Interestingly, department with a high proportion of male doctors seem to have a higher risk of infection. Our results call for re-emphasizing strict occupational protection code in battling this novel contagious disease.
+
+The risk of 2019-nCoV infection was higher in the open area than in the quarantined area. N95 may be more effective for 2019-nCoV infections."""
+s2 = """Cases of a novel type of contagious pneumonia were first reported in December 2019 in Wuhan, China. The Centers for Disease Control and Prevention (CDC) and Chinese health authorities have determined that a novel coronavirus (CoV), denoted as 2019-nCoV (SARS-CoV-2), is the cause of this pneumonia outbreak (COVID-19) [[1]
+,[2]
+]. Existing evidence has confirmed the human-to-human transmission of 2019-nCoV [[3]
+].
+We retrospectively collected infection data from 2 to 22 January 2020 at six departments (Respiratory, Intensive Care Unit (ICU), Infectious Disease, Hepatobiliary Pancreatic Surgery, Trauma and Microsurgery and Urology) from Zhongnan Hospital of Wuhan University. Medical staff (doctors and nurses) followed differential routines of occupational protection: (1) staff at the Departments of Respiratory Medicine, ICU, and Infectious Disease (mainly quarantined area) wore N95 respirators, and disinfected and cleaned their hands frequently (the N95 group); (2) medical staff in the other three departments wore no medical masks, and disinfected and cleaned their hands only occasionally (the no-mask group). The difference was because the latter departments were not considered to be high risk in the early days of the outbreak.
+Suspected cases of 2019-nCoV infection were investigated by chest computed tomography, and confirmed by molecular diagnosis. In total, 28 and 58 patients had confirmed and suspected 2019-nCoV-infection, respectively. Patient exposure was significantly higher for the N95 group compared with the no-mask group (for confirmed patients, difference: 733%; exposure odds ratio: 8.33, Table I).
+Among the 493 medical staff, none of the 278 staff (56 doctors and 222 nurses) in the N95 group became infected, but 10 of 213 staff (77 doctors and 136 nurses) from the no-mask group were confirmed as infected (Table I). Regardless of their lower risk of exposure, the 2019-nCoV infection rate for medical staff was significantly increased in the no-mask group compared with the N95 respirator group (difference: 4.65%, (95% confidence interval: 1.75%–infinite); P<2.2e-16) (adjusted odds ratio: 464.82, (95% confidence interval: 97.73–infinite); P<2.2e-16).
+Likewise, we analysed the medical staff infection data from Huangmei People's Hospital (12 confirmed patients) and Qichun People's Hospital (11 confirmed patients), and observed a similar phenomenon. No medical staff wearing the N95 respirators and following routines of frequent disinfection and hand washing were infected by 2019-nCoV up until 22 January 2020.
+A randomized clinical trial has reported that the N95 respirators vs medical masks resulted in no significant difference in the incidence of laboratory confirmed influenza [[4]
+]. In our study, we observed that the N95 respirators, disinfection and hand washing appeared to help reduce the infectious risk of 2019-nCoV in doctors and nurses. Interestingly, departments with a high proportion of male doctors seemed to have a higher risk of infection. Our results emphasize the need for strict occupational protection measures in fighting COVID-19."""
+
+doc = nlp(s)
+for ent in doc.ents:
+    print(ent, ent.label_)
+doc2 = nlp(s2)
+for ent in doc2.ents:
+    print(ent, ent.label_)
