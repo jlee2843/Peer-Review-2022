@@ -1,5 +1,4 @@
 #print(f'Invoking __init__.py for {__name__}')
 #import module.file, module.query
 
-__all__ = ['arc_pyspark', 'file', 'query']
-
+__all__ = ['arc_pyspark', 'file', 'query', 'crossref', 'pdf_manipulation']
