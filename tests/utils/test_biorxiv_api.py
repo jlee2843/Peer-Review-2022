@@ -178,7 +178,7 @@ def test_key_values(prepub_query, query):
     assert keys == prepub_query.get_keys()
 
 
-def test_key_values_postprint(pub_query, pubs_query):
+def test_key_values_published(pub_query, pubs_query):
     keys: Tuple = (
         "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
         "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
@@ -202,9 +202,9 @@ def test_process_data_preprint(prepub_query: Query) -> None:
     process_biorxiv_query(prepub_query, 'doi')
 
 
-def test_process_data_postprint(pub_query: Query) -> None:
+def test_process_data_published(pub_query: Query) -> None:
     """
-    Test the process_data method for the postprint query.
+    Test the process_data method for the publishedt query.
 
     :param pub_query: The Query object to be processed.
     :type pub_query: Query
