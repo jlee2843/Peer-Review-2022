@@ -1,12 +1,11 @@
 """
-The biorvix_api module contains functions that interacts with the Biorxiv database through its API and processes the
+The iorvix_api module contains functions that interacts with the BioRxiv database through its API and processes the
 information that is retreived from the Biorxiv database.
-
 """
+
 import time
 from typing import List, Tuple
 
-import numpy as np
 import pandas as pd
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
@@ -17,15 +16,14 @@ from modules.utils.query import get_value, convert_date, get_json_data, Query
 
 def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
     """
-    The process_data function processes the data and prepares a journal list.
+    Process data based on provided parameters.
 
-    :param json_info: A dictionary containing the JSON data.
+    :param json_info: A dictionary containing JSON data.
     :param section: A string representing the section of the JSON data to process.
-    :param keys: A tuple of strings representing the keys to extract from each entry in the specified section.
-    :param cursor: An integer representing the desired cursor value to add to each entry.
-    :param disable: A boolean indicating whether to disable a certain action if True. Defaults to True.
-    :return: A list containing processed journal entries.
-
+    :param keys: A tuple of strings representing the keys to extract from each journal entry.
+    :param cursor: An integer representing the cursor value to increment each journal entry by.
+    :param disable: A boolean indicating whether a delay should be applied before processing (default is True).
+    :return: A list of lists representing processed data from journal entries.
     """
 
     # a list comprehension is created with a nested list comprehension inside.
@@ -45,7 +43,7 @@ def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, d
 # The create_article function uses the Factory and Mediator Design Patterns.
 def create_article(doi: str, *args: object, **kwargs: object) -> Article:
     """
-    It's purpose is to create an article object using a digital object identifier (DOI) and other optional parameters,
+    Its purpose is to create an article object using a digital object identifier (DOI) and other optional parameters,
     potentially returning an Article object.
 
     :param doi: The DOI (Digital Object Identifier) of the article.
@@ -84,39 +82,8 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
     :return: a pandas DataFrame with the preprocessed data
 
     The `create_prepublish_df` method takes a pandas DataFrame `df` as input and performs a series of preprocessing
-    steps on the data. It modifies the DataFrame by applying various transformations
-    * to different columns. The method then returns the modified DataFrame with the preprocessed data.
-
-    Here are the steps performed by the method:
-
-    1. The `Num_of_Authors` column is added to the DataFrame by splitting the values in the `Authors` column using ';'
-       separator and counting the number of authors for each row.
-
-    2. The `DOI` column is converted to string type.
-
-    3. The `Title` column is converted to string type and leading/trailing white spaces are removed.
-
-    4. The `Authors` column is converted to string type and leading/trailing white spaces are removed.
-
-    5. The `Corresponding_Authors` column is converted to string type and leading/trailing white spaces are removed.
-
-    6. The `Institution` column is converted to uppercase and leading/trailing white spaces are removed.
-       It is then converted to a categorical data type.
-
-    7. The `Date` column is converted to a date format using the `convert_date` function. The function must be defined
-       elsewhere in the code.
-
-    8. The `Version` column is converted to integer type.
-
-    9. The `Type` column is converted to lowercase and leading/trailing white spaces are removed. It is then converted
-       to a categorical data type.
-
-    10. The `Category` column is converted to title case and leading/trailing white spaces are removed. It is then
-        converted to a categorical data type.
-
-    11. The `Xml` column is converted to string type.
-
-    12. The `Published` column is converted to string type.
+    steps on the data. It modifies the DataFrame by applying various transformations to different columns. The method
+    then returns the modified DataFrame with the preprocessed data.
 
     If any errors occur during the preprocessing steps, an error message is printed along with the exception details.
 
@@ -181,16 +148,19 @@ def receive_missing_initial_version_list() -> List[str]:
     return result
 
 
-def get_journal_name(query: Query) -> str:
+def get_journal_name(query: Query, key: str = 'published_journal') -> str:
     """
-    The purpose of the function is to return the name of the journal based on the results of the provided query.
+    Retrieve the journal name from the JSON data based on the specified query and key.
 
-    :param query: A Query object representing the search query.
-    :return: A string representing the name of the journal found in the search results.
-
+    :param query: The query to filter the JSON data.
+    :param key: The key to retrieve the journal name from the JSON data. Default is 'published_journal'.
+    :return: The journal name as a string.
     """
+
     _, result = get_json_data(0, 0, query)
-    return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 1]
+    result = result.get_result()['collection'][0]
+    # return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 8]
+    return get_value(result, key)
 
 
 def create_journal(name: str) -> Journal:

@@ -12,7 +12,7 @@ from requests import HTTPError, Response
 class Query:
     _result = None
 
-    def __init__(self, url: str, keys: Tuple[str], col_names: List[str]):
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str]) -> object:
         self._url = url
         self._keys = keys
         self._col_names = col_names
