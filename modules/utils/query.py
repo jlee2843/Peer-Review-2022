@@ -6,10 +6,38 @@ import doi
 import numpy as np
 import pandas as pd
 import requests
+from pandas import Series
 from requests import HTTPError, Response
 
 
 class Query:
+    """
+    Class Query
+
+    This class represents a query object used to interact with a database.
+
+    Attributes:
+        _result (object): The result of the query
+
+    Methods:
+        __init__(self, url: str, keys: Tuple[str], col_names: List[str]) -> object:
+            Initializes a new Query object with the given URL, keys, and column names.
+
+        get_result(self):
+            Returns the result of the query
+
+        get_keys(self):
+            Returns the keys used in the query
+
+        get_url(self):
+            Returns the URL used in the query
+
+        get_col_names(self):
+            Returns the column names used in the query
+
+        set_result(self, data):
+            Sets the result of the query to the given data
+    """
     _result = None
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str]) -> object:
@@ -34,18 +62,31 @@ class Query:
 
 
 def get_json_data(counter: int, cursor: int, query: Query) -> Tuple[int, Query]:
+    """
+    Retrieve JSON data from a web service.
+
+    :param counter: The counter value to be passed to the web service.
+    :param cursor: The cursor value to be passed to the web service.
+    :param query: The query object containing the URL and other parameters.
+    :return: A tuple containing the updated cursor value and the query object with the JSON data set as the result.
+    """
+
     query.set_result(get_web_data(counter, query.get_url(), "json"))
     return cursor, query
 
 
 def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
     """
+    Retrieves web data from the given URL based on the specified attribute.
 
-    :param counter:
-    :param url:
-    :param attr:
-    :return:
+    :param counter: The number of connection attempts to make.
+    :param url: The URL from which to retrieve the web data.
+    :param attr: The attribute to retrieve from the web data. Default is "text".
+                 Valid values are "text", "content", and "json".
+    :return: The retrieved web data in text format (default), json format, or in byte format.
+    :raises ValueError: If the specified attribute is not valid (not 'text', 'content', or 'json').
     """
+
     result: Any = None
     valid = ['text', 'content', 'json']
     attr = attr.strip().lower()
@@ -66,6 +107,21 @@ def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
 
 
 def connect_url(counter: int, url: str) -> Response:
+    """
+
+    Connect to the specified URL.
+
+    :param counter: The number of times the connection has been attempted.
+    :type counter: int
+
+    :param url: The URL to connect to.
+    :type url: str
+
+    :return: The HTTP response from the URL.
+    :rtype: Response
+
+    """
+
     response: Response = Response()
 
     try:
@@ -83,6 +139,13 @@ def connect_url(counter: int, url: str) -> Response:
 
 
 def check_doi(x: str):
+    """
+    Check DOI validity.
+
+    :param x: The input string representing a DOI (Digital Object Identifier).
+    :return: The input DOI string if it is valid.
+    :raises ValueError: If the input DOI is invalid.
+    """
     if doi.validate_doi(x.strip()) is None:
         raise ValueError(f'invalid doi: {x.strip()}')
     else:
@@ -90,6 +153,23 @@ def check_doi(x: str):
 
 
 def get_value(data: dict, key: str):
+    """
+    :param data: A dictionary containing key-value pairs.
+    :param key: A string representing the key to be used to retrieve the value from the dictionary.
+    :return: The value associated with the specified key in the dictionary.
+
+    This function takes a dictionary and a key as input parameters. It attempts to retrieve the value associated with
+    the key from the dictionary. If the key is found in the dictionary, the corresponding value is returned. If the
+    key is not found, an exception is raised.
+
+    Example usage:
+    ```
+    data = {'a': 1, 'b': 2, 'c': 3}
+    key = 'b'
+    result = get_value(data, key)
+    print(result)  # Output: 2
+    ```
+    """
     result = None
 
     try:
@@ -103,6 +183,13 @@ def get_value(data: dict, key: str):
 
 
 def convert_date(value: str):
+    """
+    :param value: A string representing a date in the format 'YYYY-MM-DD' with optional time information in the
+                  form 'HH:MM:SS'.
+    :return: A datetime object representing the date extracted from the given value. If the conversion fails,
+             returns `pd.NaT`.
+    """
+
     try:
         return datetime.strptime(value.strip().split(':')[0], '%Y-%m-%d')
     except Exception as e:
@@ -110,18 +197,51 @@ def convert_date(value: str):
         return pd.NaT
 
 
-def freq_count(x, y):
+def freq_count(x: pd.DataFrame, y: str) -> Series:
+    """
+    Perform frequency count on a pandas DataFrame series.
+
+    :param x: a pandas DataFrame series.
+    :param y: the column name of the series to perform frequency count on.
+    :return: the frequency count of the given series.
+
+    Example:
+        >>> import pandas as pd
+        >>> data = {'col1': [1, 2, 3, 2, 1, 3, 1]}
+        >>> df = pd.DataFrame(data)
+        >>> freq_count(df['col1'], 'col1')
+        1    3
+        2    2
+        3    2
+        Name: col1, dtype: int64
+    """
     return x[y].value_counts()
 
 
-def flatten(y):
+def flatten(y: list) -> list:
+    """
+    Flattens a nested list and sorts it based on the first element of each sublist.
+
+    :param y: a nested list
+    :return: a flattened list sorted based on the first element of each sublist
+    """
     return sorted([sublist for inner in y for sublist in inner], key=lambda x: x[0])
 
 
 # flatten = lambda y: sorted([sublist for inner in y for sublist in inner],
 #                           key=lambda x: x[0])
 
-def create_df(x: np.ndarray, y: List):
+def create_df(x: np.ndarray, y: List[str]) -> pd.DataFrame:
+    """
+    Create a pandas DataFrame from the given numpy array and list of column names.
+
+    :param x: A numpy array containing the data.
+    :type x: np.ndarray
+    :param y: A list of column names.
+    :type y: List[str]
+    :return: A pandas DataFrame created from the input data with column names and an index.
+    :rtype: pd.DataFrame
+    """
     return pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
 
 
