@@ -330,6 +330,7 @@ def prepub_test_file() -> np.ndarray:
     filename = '../../data/prepub-test.json'
     assert Path(filename).exists()
     json_data = json.load(Path(filename).open())
+    # np.array is used is the max dimension for ndarray is 32 and result can be > 32 dimensions
     result = np.array(process_data(json_data, 'collection', keys, 0))
 
     return result
