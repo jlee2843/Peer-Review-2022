@@ -4,23 +4,41 @@ from threading import Lock
 from typing import Optional, List
 
 
-class FactoryInstantiationClass(ABC):
-    def __init__(self, *args, **kwargs):
-        factory = kwargs['factory'] if isinstance(kwargs['factory'], bool) else False
-        tmp = args[0] if len(args) > 0 else False
-        factory = factory or tmp
+class FactoryBuilder(ABC):
+    """
+    FactoryBuilder
 
-        if factory:
+    Abstract base class for factory instantiation classes.
+
+    Attributes:
+        None
+
+    Methods:
+        __init__(self, *args, **kwargs)
+            Initializes an instance of FactoryBuilder.
+            If `factory` argument is `True` or if the first argument in `args` is `True`, calls `_create_object` method.
+            Otherwise, raises a RuntimeError.
+
+        _create_object(self, *args, **kwargs)
+            Abstract method that should be implemented by subclasses.
+            Creates the object based on the given arguments and keyword arguments.
+    """
+
+    def __init__(self, factory: bool = False, *args, **kwargs):
+        """
+        Initialize the object.
+
+        :param args: (optional) Variable-length argument list.
+        :param kwargs: (optional) Keyword arguments.
+
+        Raises:
+            RuntimeError: If the class is not instantiated through the corresponding Factory.
+
+        """
+        is_factory_instance = kwargs.get('factory', factory)
+
+        if is_factory_instance and isinstance(is_factory_instance, bool):
             self._create_object(*args, **kwargs)
-        else:
-            raise RuntimeError('Please instantiate class through the corresponding Factory')
-
-        # self.__init__(factory=False, *args, **kwargs)
-
-    def __init__(self, factory: bool = False, *args: object, **kwargs: object) -> None:
-        if factory:
-            self._create_object(*args, **kwargs)
-
         else:
             raise RuntimeError('Please instantiate class through the corresponding Factory')
 
@@ -33,23 +51,42 @@ class MediatorKey(ABC):
     pass
 
 
-class Department(MediatorKey, FactoryInstantiationClass):
+class Department(MediatorKey, FactoryBuilder):
     pass
 
 
-class Institution(MediatorKey, FactoryInstantiationClass):
+class Institution(MediatorKey, FactoryBuilder):
     pass
 
 
-class Category(MediatorKey, FactoryInstantiationClass):
+class Category(MediatorKey, FactoryBuilder):
     pass
 
 
-class Author(FactoryInstantiationClass):
+class Author(FactoryBuilder):
     pass
 
 
-class Article(FactoryInstantiationClass):
+class Article(FactoryBuilder):
+    """
+    This class represents an Article and is a subclass of FactoryBuilder.
+
+    Attributes:
+        _corr_authors_detail (Optional[Author]): Optional detailed information about corresponding authors.
+        _authors_detail (Optional[List[Author]]): Optional detailed information about authors.
+        _publication_link (Optional[str]): Optional link to the publication.
+
+    Methods:
+        _create_object(*args, **kwargs): Create an Article object with the given arguments.
+        get_title() -> str: Get the title of the Article.
+        get_doi() -> str: Get the DOI of the Article.
+        set_publication_link(link: str): Set the publication link of the Article.
+        get_publication_link() -> str: Get the publication link of the Article.
+        get_version() -> int: Get the version of the Article.
+        get_date() -> datetime: Get the date of the Article.
+        get_pub_doi() -> str: Get the publication DOI of the Article.
+    """
+
     _corr_authors_detail: Optional[Author]
     _authors_detail: Optional[List[Author]]
     _publication_link: Optional[str]
@@ -92,7 +129,15 @@ class Article(FactoryInstantiationClass):
         return self._pub_doi
 
 
-class Journal(FactoryInstantiationClass):
+class Journal(FactoryBuilder):
+    """
+    Initialize the Journal object with the given parameters.
+
+    :param prefix: A string representing the prefix of the journal (optional).
+    :param title: A string representing the title of the journal.
+    :param issn: A string representing the ISSN of the journal (optional).
+    :param impact_factor: A float representing the impact factor of the journal (optional).
+    """
     _prefix: Optional[str]
     _issn: Optional[str]
     _impact_factor: Optional[float]
@@ -125,7 +170,7 @@ class Journal(FactoryInstantiationClass):
         return self._issn
 
 
-class Publication(FactoryInstantiationClass):
+class Publication(FactoryBuilder):
     _journal: Journal
     _article: Article
     _name: str
@@ -151,6 +196,31 @@ class Publication(FactoryInstantiationClass):
 
 
 class Singleton(type):
+    """
+    Singleton
+
+    A metaclass that implements the Singleton design pattern.
+
+    Attributes:
+        _instance (dict): A dictionary that stores the instances of the Singleton classes.
+        _lock (Lock): A lock to ensure thread-safe creation of the Singleton instances.
+
+    Methods:
+        __call__(*args, **kwargs)
+            Return a single instance of the Singleton class.
+
+    Example:
+        class MyClass(metaclass=Singleton):
+            def __init__(self, value):
+                self.value = value
+
+        obj1 = MyClass(1)
+        obj2 = MyClass(2)
+
+        print(obj1.value)  # Output: 1
+        print(obj2.value)  # Output: 1
+        print(obj1 is obj2)  # Output: True
+    """
     _instance = {}
 
     _lock: Lock = Lock()

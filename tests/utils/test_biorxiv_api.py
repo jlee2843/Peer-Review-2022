@@ -330,7 +330,7 @@ def prepub_test_file() -> np.ndarray:
     filename = '../../data/prepub-test.json'
     assert Path(filename).exists()
     json_data = json.load(Path(filename).open())
-    result = np.ndarray(process_data(json_data, 'collection', keys, 0))
+    result = np.array(process_data(json_data, 'collection', keys, 0))
 
     return result
 
