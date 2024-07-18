@@ -62,7 +62,7 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
     # The following line is importing ArticleFactoryfrom modules.creational.factory_design_pattern.ArticleFactory is a
     # factory for creating Article objects in the context of the factory design pattern.
     article = ArticleFactory().create_object(identifier=doi, *args, **kwargs)
-    pub_doi = article.get_pub_doi()
+    pub_doi = article.pub_doi
     # if created article object has a published DOI then added it to Publication list
     if pub_doi.upper() != 'NA':
         # the newly created article object is added to the ArticleFactory's publication list and
@@ -142,8 +142,8 @@ def receive_missing_initial_version_list() -> List[str]:
     dois: List[str] = ArticleFactory().get_publication_list()
     for doi in dois:
         article = PublishedPrepubArticleMediator().get_object(doi)
-        if article.get_version() != 1:
-            result.append(article.get_doi())
+        if article.version != 1:
+            result.append(article.doi)
 
     return result
 
@@ -189,4 +189,4 @@ def create_publication(journal: Journal, article: Article) -> Publication:
 
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
-    return PublicationFactory().create_object(article.get_pub_doi(), journal=journal, article=article)
+    return PublicationFactory().create_object(article.pub_doi, journal=journal, article=article)

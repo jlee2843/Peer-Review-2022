@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
 from threading import Lock
 from typing import Optional, List
 
 
-class FactoryBuilder(ABC):
+@dataclass
+class BlockBuilder(ABC):
     """
-    FactoryBuilder
+    BlockBuilder
 
     Abstract base class for factory instantiation classes.
 
@@ -15,7 +17,7 @@ class FactoryBuilder(ABC):
 
     Methods:
         __init__(self, *args, **kwargs)
-            Initializes an instance of FactoryBuilder.
+            Initializes an instance of BlockBuilder.
             If `factory` argument is `True` or if the first argument in `args` is `True`, calls `_create_object` method.
             Otherwise, raises a RuntimeError.
 
@@ -24,26 +26,15 @@ class FactoryBuilder(ABC):
             Creates the object based on the given arguments and keyword arguments.
     """
 
-    def __init__(self, factory: bool = False, *args, **kwargs):
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
         """
         Initialize the object.
 
         :param args: (optional) Variable-length argument list.
         :param kwargs: (optional) Keyword arguments.
 
-        Raises:
-            RuntimeError: If the class is not instantiated through the corresponding Factory.
-
         """
-        is_factory_instance = kwargs.get('factory', factory)
-
-        if is_factory_instance and isinstance(is_factory_instance, bool):
-            self._create_object(*args, **kwargs)
-        else:
-            raise RuntimeError('Please instantiate class through the corresponding Factory')
-
-    @abstractmethod
-    def _create_object(self, *args, **kwargs):
         pass
 
 
@@ -51,25 +42,62 @@ class MediatorKey(ABC):
     pass
 
 
-class Department(MediatorKey, FactoryBuilder):
-    pass
+@dataclass
+class Department(MediatorKey, BlockBuilder):
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the object.
+
+        :param args: (optional) Variable-length argument list.
+        :param kwargs: (optional) Keyword arguments.
+
+        """
+        pass
 
 
-class Institution(MediatorKey, FactoryBuilder):
-    pass
+@dataclass
+class Institution(MediatorKey, BlockBuilder):
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the object.
+
+        :param args: (optional) Variable-length argument list.
+        :param kwargs: (optional) Keyword arguments.
+
+        """
+        pass
 
 
-class Category(MediatorKey, FactoryBuilder):
-    pass
+@dataclass
+class Category(MediatorKey, BlockBuilder):
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the object.
+
+        :param args: (optional) Variable-length argument list.
+        :param kwargs: (optional) Keyword arguments.
+
+        """
+        pass
 
 
-class Author(FactoryBuilder):
-    pass
+@dataclass
+class Author(BlockBuilder):
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the object.
+
+        :param args: (optional) Variable-length argument list.
+        :param kwargs: (optional) Keyword arguments.
+
+        """
+        pass
 
 
-class Article(FactoryBuilder):
+@dataclass
+class Article(BlockBuilder):
     """
-    This class represents an Article and is a subclass of FactoryBuilder.
+    This class represents an Article and is a subclass of BlockBuilder.
 
     Attributes:
         _corr_authors_detail (Optional[Author]): Optional detailed information about corresponding authors.
@@ -87,11 +115,23 @@ class Article(FactoryBuilder):
         get_pub_doi() -> str: Get the publication DOI of the Article.
     """
 
+    _doi: str
+    _title: str
+    _authors: str
+    _authors: str  # todo: should be a list of Author object(s)
+    _corr_authors: str  # todo: should be a list of Author object(s)
+    _institution: str  # todo: should be an Institution object
+    _date: datetime
+    _version: int
+    _type: str
+    _category: List[str]
+    _xml: str
+    _pub_doi: str
     _corr_authors_detail: Optional[Author]
     _authors_detail: Optional[List[Author]]
     _publication_link: Optional[str]
 
-    def _create_object(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._doi = kwargs.pop('doi')
         self._title = kwargs.pop('title')
         self._authors = kwargs.pop('authors')
@@ -107,29 +147,37 @@ class Article(FactoryBuilder):
         self._corr_authors_detail = kwargs.pop('corr_authors_detail', None)
         self._publication_link = kwargs.pop('publication_link', None)
 
-    def get_title(self) -> str:
+    @property
+    def title(self) -> str:
         return self._title
 
-    def get_doi(self) -> str:
+    @property
+    def doi(self) -> str:
         return self._doi
 
-    def set_publication_link(self, link: str):
-        self._publication_link = link
-
-    def get_publication_link(self) -> str:
+    @property
+    def publication_link(self) -> str:
         return self._publication_link
 
-    def get_version(self) -> int:
+    @publication_link.setter
+    def publication_link(self, link: str):
+        self._publication_link = link
+
+    @property
+    def version(self) -> int:
         return self._version
 
-    def get_date(self) -> datetime:
+    @property
+    def date(self) -> datetime:
         return self._date
 
-    def get_pub_doi(self) -> str:
+    @property
+    def pub_doi(self) -> str:
         return self._pub_doi
 
 
-class Journal(FactoryBuilder):
+@dataclass
+class Journal(BlockBuilder):
     """
     Initialize the Journal object with the given parameters.
 
@@ -142,7 +190,7 @@ class Journal(FactoryBuilder):
     _issn: Optional[str]
     _impact_factor: Optional[float]
 
-    def _create_object(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._prefix = kwargs.pop('prefix', '')
         self._title = kwargs.pop('title')
         self._issn = kwargs.pop('issn', '')
@@ -170,17 +218,17 @@ class Journal(FactoryBuilder):
         return self._issn
 
 
-class Publication(FactoryBuilder):
+class Publication(BlockBuilder):
     _journal: Journal
     _article: Article
     _name: str
     _id: str
 
-    def _create_object(self, journal: Journal, article: Article) -> None:
+    def __init__(self, journal: Journal, article: Article) -> None:
         self._journal = journal
         self._article = article
-        self._name = f'{article.get_title()}\n{article.get_pub_doi()}'
-        self._id = article.get_pub_doi()
+        self._name = f'{article.title}\n{article.pub_doi}'
+        self._id = article.pub_doi
 
     def get_article(self) -> Article:
         return self._article

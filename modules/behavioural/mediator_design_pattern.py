@@ -79,7 +79,7 @@ class PublishedPrepubArticleMediator(Mediator):
             value = self.get_object(pub_doi)
             if value is None or \
                     (value is not None and
-                     article.get_version() <= value.get_version() and article.get_date() < value.get_date()):
+                     article.version <= value.version and article.date < value.date):
                 value = article
 
             self._mediator_map.update({pub_doi: [value]})

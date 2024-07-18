@@ -74,7 +74,7 @@ class Factory(metaclass=Singleton):
             new_object = self._factory_map.get(identifier)
 
             if new_object is None:
-                new_object = Factory.import_class(class_path)(True, *args, **kwargs)
+                new_object = Factory.import_class(class_path)(*args, **kwargs)
                 self._factory_map[identifier] = new_object
 
         return new_object
@@ -236,8 +236,8 @@ class ArticleFactory(Factory):
 
         with self._lock:
             kwargs.update(doi=identifier)
-            new_object = Factory.import_class('modules.building_block.Article')(True, *args, **kwargs)
-            articles: SortedList = self._factory_map.get(identifier, SortedList(key=lambda x: x.get_version()))
+            new_object = Factory.import_class('modules.building_block.Article')(*args, **kwargs)
+            articles: SortedList = self._factory_map.get(identifier, SortedList(key=lambda x: x.version))
             articles.add(new_object)
             self._factory_map[identifier] = articles
 
@@ -259,7 +259,7 @@ class ArticleFactory(Factory):
         :return: None
         """
         with self._lock:
-            pub_doi = article.get_pub_doi()
+            pub_doi = article.pub_doi
             if len(self._pub_list) == 0:
                 self._pub_list: Set[str] = {pub_doi}
             else:

@@ -228,16 +228,6 @@ def process_biorxiv_query(query: Query, attr: str) -> None:
     assert tmp[0][1] == query.get_result()['collection'][0].get(attr)
 
 
-def test_instantiation_factory():
-    with pytest.raises(RuntimeError, match='Please instantiate class through the corresponding Factory'):
-        Article()
-        Journal()
-        Publication()
-        Department()
-        Institution()
-        Category()
-
-
 def test_create_article(prepub_query):
     """
 
@@ -317,7 +307,7 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     assert article is not None
     journal = create_journal(get_journal_name(pubs_query))
     publication = create_publication(journal, article)
-    assert publication is PublicationFactory().get_object(article.get_pub_doi())
+    assert publication is PublicationFactory().get_object(article.pub_doi)
 
 
 @pytest.fixture
@@ -366,6 +356,6 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
                                            category=df.loc[line, 'Category'], xml=df.loc[line, 'Xml'],
                                            pub_doi=df.loc[line, 'Published']))
 
-        doi: str = articles[0].get_pub_doi()
+        doi: str = articles[0].pub_doi
         article = PublishedPrepubArticleMediator().get_object(doi)
-        assert article.get_version() == 1
+        assert article.version == 1
