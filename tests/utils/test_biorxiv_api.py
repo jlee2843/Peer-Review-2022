@@ -228,6 +228,16 @@ def process_biorxiv_query(query: Query, attr: str) -> None:
     assert tmp[0][1] == query.get_result()['collection'][0].get(attr)
 
 
+def test_instantiation_factory():
+    with pytest.raises(RuntimeError, match='Please instantiate class through the corresponding Factory'):
+        Article()
+        Journal()
+        Publication()
+        Department()
+        Institution()
+        Category()
+
+
 def test_create_article(prepub_query):
     """
 
@@ -267,10 +277,10 @@ def test_create_journal(pubs_query: Query) -> None:
     journal = create_journal(get_journal_name(pubs_query))
     assert get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
-    assert journal is JournalFactory().get_object(journal.get_title())
+    assert journal is JournalFactory().get_object(journal.title)
     assert journal.get_prefix() == ''
     assert journal.get_issn() == ''
-    assert journal.get_impact_factor() == 0.0
+    assert journal.impact_factor == 0.0
 
 
 def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:

@@ -1,41 +1,45 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
 from threading import Lock
-from typing import Optional, List
+from typing import Optional, List, Any
+
+
+class NoDefaultValueGiven(Exception):
+    pass
 
 
 @dataclass
 class BlockBuilder(ABC):
     """
-    BlockBuilder
+    BlockBuilder class
 
-    Abstract base class for factory instantiation classes.
-
-    Attributes:
-        None
+    This class is an abstract base class that provides common functionality for building blocks.
 
     Methods:
-        __init__(self, *args, **kwargs)
-            Initializes an instance of BlockBuilder.
-            If `factory` argument is `True` or if the first argument in `args` is `True`, calls `_create_object` method.
-            Otherwise, raises a RuntimeError.
+    - isvalid(*args, **kwargs): Check if the class was instantiated correctly.
+    - get_value(key, default=NoValueGiven, **kwargs): Get the value for a given key from a dictionary of keyword arguments.
 
-        _create_object(self, *args, **kwargs)
-            Abstract method that should be implemented by subclasses.
-            Creates the object based on the given arguments and keyword arguments.
+    Raises:
+    - RuntimeError: If the class is instantiated directly without using the corresponding Factory.
+    - NoValueGiven: If no value is assigned for a given key.
+
     """
 
-    @abstractmethod
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the object.
+    @staticmethod
+    def isvalid(*args, **kwargs) -> bool:
+        if args == () and kwargs == {}:
+            raise RuntimeError('Please instantiate class through the corresponding Factory')
 
-        :param args: (optional) Variable-length argument list.
-        :param kwargs: (optional) Keyword arguments.
+        return True
 
-        """
-        pass
+    @staticmethod
+    def get_value(key: Any, default: List[Optional[NoDefaultValueGiven]] = NoDefaultValueGiven, **kwargs) -> Any:
+        result = kwargs.get(key, default)
+        if isinstance(result, NoDefaultValueGiven):
+            raise NoDefaultValueGiven(f'No value was assigned to {key}:')
+
+        return result
 
 
 class MediatorKey(ABC):
@@ -83,7 +87,7 @@ class Category(MediatorKey, BlockBuilder):
 
 @dataclass
 class Author(BlockBuilder):
-    def __init__(self, *args, **kwargs):
+    def __init__(*args, **kwargs):
         """
         Initialize the object.
 
@@ -132,20 +136,21 @@ class Article(BlockBuilder):
     _publication_link: Optional[str]
 
     def __init__(self, *args, **kwargs):
-        self._doi = kwargs.pop('doi')
-        self._title = kwargs.pop('title')
-        self._authors = kwargs.pop('authors')
-        self._corr_authors = kwargs.pop('corr_authors')
-        self._institution = kwargs.pop('institution')
-        self._date = kwargs.pop('date')
-        self._version = kwargs.pop('version')
-        self._type = kwargs.pop('type')
-        self._category = kwargs.pop('category')
-        self._xml = kwargs.pop('xml')
-        self._pub_doi = kwargs.pop('pub_doi')
-        self._authors_detail = kwargs.pop('authors_detail', None)
-        self._corr_authors_detail = kwargs.pop('corr_authors_detail', None)
-        self._publication_link = kwargs.pop('publication_link', None)
+        BlockBuilder().isvalid(*args, **kwargs)
+        self._doi = BlockBuilder().get_value('doi', **kwargs)
+        self._title = BlockBuilder().get_value('title', **kwargs)
+        self._authors = BlockBuilder().get_value('authors', **kwargs)
+        self._corr_authors = BlockBuilder().get_value('corr_authors', **kwargs)
+        self._institution = BlockBuilder().get_value('institution', **kwargs)
+        self._date = BlockBuilder().get_value('date', **kwargs)
+        self._version = BlockBuilder().get_value('version', **kwargs)
+        self._type = BlockBuilder().get_value('type', **kwargs)
+        self._category = BlockBuilder().get_value('category', **kwargs)
+        self._xml = BlockBuilder().get_value('xml', **kwargs)
+        self._pub_doi = BlockBuilder().get_value('pub_doi', **kwargs)
+        self._authors_detail = BlockBuilder().get_value('authors_detail', None, **kwargs)
+        self._corr_authors_detail = BlockBuilder().get_value('corr_authors_detail', None, **kwargs)
+        self._publication_link = BlockBuilder().get_value('publication_link', None, **kwargs)
 
     @property
     def title(self) -> str:
@@ -189,23 +194,33 @@ class Journal(BlockBuilder):
     _prefix: Optional[str]
     _issn: Optional[str]
     _impact_factor: Optional[float]
+    _title: str
 
     def __init__(self, *args, **kwargs):
-        self._prefix = kwargs.pop('prefix', '')
-        self._title = kwargs.pop('title')
-        self._issn = kwargs.pop('issn', '')
-        self._impact_factor = kwargs.pop('impact_factor', 0.0)
+        BlockBuilder().isvalid(args, kwargs)
+        self._prefix = BlockBuilder().get_value('prefix', '', **kwargs)
+        self._title = BlockBuilder().get_value('title', **kwargs)
+        self._issn = BlockBuilder().get_value('issn', '', **kwargs)
+        self._impact_factor = BlockBuilder().get_value('impact_factor', 0.0, **kwargs)
 
-    def set_impact_factor(self, impact_factor: float):
-        self._impact_factor = impact_factor
-
-    def get_impact_factor(self) -> float:
+    @property
+    def impact_factor(self) -> float:
         return self._impact_factor
 
-    def get_title(self) -> str:
+    @impact_factor.setter
+    def impact_factor(self, journal_impact_factor: float):
+        self._impact_factor = journal_impact_factor
+
+    @property
+    def title(self) -> str:
         return self._title
 
-    def set_prefix(self, prefix: str):
+    @property
+    def prefix(self) -> str:
+        return self._prefix
+
+    @prefix.setter
+    def prefix(self, prefix: str):
         self._prefix = prefix
 
     def get_prefix(self) -> str:
