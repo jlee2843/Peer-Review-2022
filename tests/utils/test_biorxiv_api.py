@@ -278,8 +278,8 @@ def test_create_journal(pubs_query: Query) -> None:
     assert get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
     assert journal is JournalFactory().get_object(journal.title)
-    assert journal.get_prefix() == ''
-    assert journal.get_issn() == ''
+    assert journal.prefix == ''
+    assert journal.issn == ''
     assert journal.impact_factor == 0.0
 
 

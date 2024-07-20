@@ -18,7 +18,8 @@ class BlockBuilder(ABC):
 
     Methods:
     - isvalid(*args, **kwargs): Check if the class was instantiated correctly.
-    - get_value(key, default=NoValueGiven, **kwargs): Get the value for a given key from a dictionary of keyword arguments.
+    - get_value(key, default=NoValueGiven, **kwargs): Get the value for a given key from a dictionary of keyword
+                                                      arguments.
 
     Raises:
     - RuntimeError: If the class is instantiated directly without using the corresponding Factory.
@@ -34,12 +35,17 @@ class BlockBuilder(ABC):
         return True
 
     @staticmethod
-    def get_value(key: Any, default: List[Optional[NoDefaultValueGiven]] = NoDefaultValueGiven, **kwargs) -> Any:
+    def get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any:
         result = kwargs.get(key, default)
         if isinstance(result, NoDefaultValueGiven):
             raise NoDefaultValueGiven(f'No value was assigned to {key}:')
 
         return result
+
+    @staticmethod
+    def _setattr(obj: object, fields: List[str], default: Any = NoDefaultValueGiven, **kwargs):
+        for field in fields:
+            setattr(obj, f"_{field}", BlockBuilder.get_value(field, default, **kwargs))
 
 
 class MediatorKey(ABC):
@@ -127,30 +133,23 @@ class Article(BlockBuilder):
     _institution: str  # todo: should be an Institution object
     _date: datetime
     _version: int
-    _type: str
-    _category: List[str]
+    _type: str  # some preprint database assign the type of article it is e.g. new result, contradictory results ...
+    _category: List[str]  # article's subject
     _xml: str
     _pub_doi: str
-    _corr_authors_detail: Optional[Author]
-    _authors_detail: Optional[List[Author]]
+    _corr_authors_detail: Optional[Author]  # todo: remove when Author class has been defined
+    _authors_detail: Optional[List[Author]]  # todo: remove when Author class has been defined
     _publication_link: Optional[str]
 
     def __init__(self, *args, **kwargs):
-        BlockBuilder().isvalid(*args, **kwargs)
-        self._doi = BlockBuilder().get_value('doi', **kwargs)
-        self._title = BlockBuilder().get_value('title', **kwargs)
-        self._authors = BlockBuilder().get_value('authors', **kwargs)
-        self._corr_authors = BlockBuilder().get_value('corr_authors', **kwargs)
-        self._institution = BlockBuilder().get_value('institution', **kwargs)
-        self._date = BlockBuilder().get_value('date', **kwargs)
-        self._version = BlockBuilder().get_value('version', **kwargs)
-        self._type = BlockBuilder().get_value('type', **kwargs)
-        self._category = BlockBuilder().get_value('category', **kwargs)
-        self._xml = BlockBuilder().get_value('xml', **kwargs)
-        self._pub_doi = BlockBuilder().get_value('pub_doi', **kwargs)
-        self._authors_detail = BlockBuilder().get_value('authors_detail', None, **kwargs)
-        self._corr_authors_detail = BlockBuilder().get_value('corr_authors_detail', None, **kwargs)
-        self._publication_link = BlockBuilder().get_value('publication_link', None, **kwargs)
+        super().isvalid(*args, **kwargs)
+        # fields that should have a value when the Article class is instantiated
+        fields = ['doi', 'title', 'authors', 'corr_authors', 'institution', 'date',
+                  'version', 'type', 'category', 'xml', 'pub_doi']
+        super()._setattr(self, fields, **kwargs)
+        # fields that may not have a value when the Article class is instantiated
+        fields = ['authors_detail', 'corr_authors_detail', 'publication_link']
+        super()._setattr(self, fields, None, **kwargs)
 
     @property
     def title(self) -> str:
@@ -197,11 +196,10 @@ class Journal(BlockBuilder):
     _title: str
 
     def __init__(self, *args, **kwargs):
-        BlockBuilder().isvalid(args, kwargs)
-        self._prefix = BlockBuilder().get_value('prefix', '', **kwargs)
-        self._title = BlockBuilder().get_value('title', **kwargs)
-        self._issn = BlockBuilder().get_value('issn', '', **kwargs)
-        self._impact_factor = BlockBuilder().get_value('impact_factor', 0.0, **kwargs)
+        super().isvalid(args, kwargs)
+        super()._setattr(self, ['title'], **kwargs)
+        super()._setattr(self, ['prefix', 'issn'], '', **kwargs)
+        super()._setattr(self, ['impact_factor'], 0.0, **kwargs)
 
     @property
     def impact_factor(self) -> float:
@@ -220,41 +218,45 @@ class Journal(BlockBuilder):
         return self._prefix
 
     @prefix.setter
-    def prefix(self, prefix: str):
+    def prefix(self, prefix: str) -> None:
         self._prefix = prefix
 
-    def get_prefix(self) -> str:
-        return self._prefix
-
-    def set_issn(self, issn: str):
-        self._issn = issn
-
-    def get_issn(self) -> str:
+    @property
+    def issn(self) -> str:
         return self._issn
+
+    @issn.setter
+    def issn(self, issn: str) -> None:
+        self._issn = issn
 
 
 class Publication(BlockBuilder):
     _journal: Journal
     _article: Article
     _name: str
-    _id: str
+    _pub_doi: str
 
-    def __init__(self, journal: Journal, article: Article) -> None:
-        self._journal = journal
-        self._article = article
+    def __init__(self, *args, **kwargs) -> None:
+        super().isvalid(*args, **kwargs)
+        super()._setattr(self, ['journal', 'article'], **kwargs)
+        article = self._article
         self._name = f'{article.title}\n{article.pub_doi}'
-        self._id = article.pub_doi
+        self._pub_doi = article.pub_doi
 
-    def get_article(self) -> Article:
+    @property
+    def article(self) -> Article:
         return self._article
 
-    def set_article(self, article: Article) -> None:
+    @article.setter
+    def article(self, article: Article) -> None:
         self._article = article
 
-    def get_journal(self) -> Journal:
+    @property
+    def journal(self) -> Journal:
         return self._journal
 
-    def set_journal(self, journal: Journal) -> None:
+    @journal.setter
+    def journal(self, journal: Journal) -> None:
         self._journal = journal
 
 
@@ -275,7 +277,7 @@ class Singleton(type):
     Example:
         class MyClass(metaclass=Singleton):
             def __init__(self, value):
-                self.value = value
+                self._value = value
 
         obj1 = MyClass(1)
         obj2 = MyClass(2)
