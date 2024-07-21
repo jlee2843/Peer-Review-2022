@@ -10,25 +10,54 @@ class NoDefaultValueGiven(Exception):
 
 
 @dataclass
-class BlockBuilder(ABC):
+class BaseObject(ABC):
     """
-    BlockBuilder class
+    Class BaseObject
 
-    This class is an abstract base class that provides common functionality for building blocks.
+    Abstract base class for building blocks.
 
     Methods:
-    - isvalid(*args, **kwargs): Check if the class was instantiated correctly.
-    - get_value(key, default=NoValueGiven, **kwargs): Get the value for a given key from a dictionary of keyword
-                                                      arguments.
+    - not_empty(*args, **kwargs) -> bool
+        Check if the class is instantiated correctly.
+        Parameters:
+            *args: positional arguments
+            **kwargs: keyword arguments
+        Returns:
+            bool: True if the class is instantiated correctly, False otherwise
+        Raises:
+            RuntimeError: If the class is not instantiated through the corresponding Factory
 
-    Raises:
-    - RuntimeError: If the class is instantiated directly without using the corresponding Factory.
-    - NoValueGiven: If no value is assigned for a given key.
+    - get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any
+        Get the value of a key from keyword arguments or return the default value.
+        Parameters:
+            key (Any): The key to lookup in the keyword arguments
+            default (Any): Default value to return if the key is not found (optional)
+            **kwargs: Keyword arguments
+        Returns:
+            Any: The value associated with the key, or the default value if the key is not found
+        Raises:
+            NoDefaultValueGiven: If no value was assigned to the key
+
+    - _setattr(obj: object, fields: List[str], default: Any = NoDefaultValueGiven, **kwargs)
+        Set attributes on an object using the provided fields and values from keyword arguments.
+        Parameters:
+            obj (object): The object to set attributes on
+            fields (List[str]): List of attribute names to set on the object
+            default (Any): Default value to use if a field is not found in keyword arguments (optional)
+            **kwargs: Keyword arguments containing field-value pairs
 
     """
 
     @staticmethod
-    def isvalid(*args, **kwargs) -> bool:
+    def not_empty(*args, **kwargs) -> bool:
+        """
+        Check if the arguments and keyword arguments are empty.
+
+        :param args: Positional arguments.
+        :param kwargs: Keyword arguments.
+        :return: True if the arguments are not empty, else raise RuntimeError.
+        :raises RuntimeError: If no arguments or keyword arguments are provided.
+        """
         if args == () and kwargs == {}:
             raise RuntimeError('Please instantiate class through the corresponding Factory')
 
@@ -36,6 +65,15 @@ class BlockBuilder(ABC):
 
     @staticmethod
     def get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any:
+        """
+        Returns the value associated with the given key from kwargs.
+
+        :param key: The key to lookup in kwargs.
+        :param default: The default value to return if the key is not found in kwargs. Defaults to NoDefaultValueGiven.
+        :param kwargs: The keyword arguments from which to lookup the value.
+        :return: The value associated with the key, or the default value if not found.
+        :raises NoDefaultValueGiven: If the key is not found and no default value was provided.
+        """
         result = kwargs.get(key, default)
         if isinstance(result, NoDefaultValueGiven):
             raise NoDefaultValueGiven(f'No value was assigned to {key}:')
@@ -44,8 +82,17 @@ class BlockBuilder(ABC):
 
     @staticmethod
     def _setattr(obj: object, fields: List[str], default: Any = NoDefaultValueGiven, **kwargs):
+        """
+        Sets the attributes of an object with the given fields.
+
+        :param obj: The object whose attributes need to be set.
+        :param fields: A list of strings specifying the names of the fields to be set.
+        :param default: The default value to be used if a field is not found in kwargs. Defaults to NoDefaultValueGiven.
+        :param kwargs: Additional keyword arguments that will be used to set the field values.
+        :return: None
+        """
         for field in fields:
-            setattr(obj, f"_{field}", BlockBuilder.get_value(field, default, **kwargs))
+            setattr(obj, f"_{field}", BaseObject.get_value(field, default, **kwargs))
 
 
 class MediatorKey(ABC):
@@ -53,7 +100,7 @@ class MediatorKey(ABC):
 
 
 @dataclass
-class Department(MediatorKey, BlockBuilder):
+class Department(MediatorKey, BaseObject):
     def __init__(self, *args, **kwargs):
         """
         Initialize the object.
@@ -66,7 +113,7 @@ class Department(MediatorKey, BlockBuilder):
 
 
 @dataclass
-class Institution(MediatorKey, BlockBuilder):
+class Institution(MediatorKey, BaseObject):
     def __init__(self, *args, **kwargs):
         """
         Initialize the object.
@@ -79,7 +126,7 @@ class Institution(MediatorKey, BlockBuilder):
 
 
 @dataclass
-class Category(MediatorKey, BlockBuilder):
+class Category(MediatorKey, BaseObject):
     def __init__(self, *args, **kwargs):
         """
         Initialize the object.
@@ -92,7 +139,7 @@ class Category(MediatorKey, BlockBuilder):
 
 
 @dataclass
-class Author(BlockBuilder):
+class Author(BaseObject):
     def __init__(*args, **kwargs):
         """
         Initialize the object.
@@ -105,24 +152,51 @@ class Author(BlockBuilder):
 
 
 @dataclass
-class Article(BlockBuilder):
+class Article(BaseObject):
     """
-    This class represents an Article and is a subclass of BlockBuilder.
+
+    Article Class
+    -------------
+
+    This class represents an article and inherits from the `BaseObject` base class.
 
     Attributes:
-        _corr_authors_detail (Optional[Author]): Optional detailed information about corresponding authors.
-        _authors_detail (Optional[List[Author]]): Optional detailed information about authors.
-        _publication_link (Optional[str]): Optional link to the publication.
+    -----------
+    - `_doi` (str): The DOI (Digital Object Identifier) of the article.
+    - `_title` (str): The title of the article.
+    - `_authors` (str): The authors of the article. This should be a string representing a list of `Author` object(s).
+    - `_corr_authors` (str): The corresponding authors of the article. This should be a string representing a list of
+                             `Author` object(s).
+    - `_institution` (str): The institution associated with the article. This should be an `Institution` object.
+    - `_date` (datetime): The date of the article.
+    - `_version` (int): The version of the article.
+    - `_type` (str): The type of the article, e.g. "new result", "contradictory results", etc.
+    - `_category` (List[str]): The subject category(ies) of the article.
+    - `_xml` (str): The XML representation of the article.
+    - `_pub_doi` (str): The DOI of the publication.
+
+    Optional attributes:
+    -------------------
+    - `_corr_authors_detail` (Optional[Author]): Additional details of the corresponding authors. To be removed when
+                                                 `Author` class is defined.
+    - `_authors_detail` (Optional[List[Author]]): Additional details of the authors. To be removed when `Author` class
+                                                  is defined.
+    - `_publication_link` (Optional[str]): The publication link of the article.
 
     Methods:
-        _create_object(*args, **kwargs): Create an Article object with the given arguments.
-        get_title() -> str: Get the title of the Article.
-        get_doi() -> str: Get the DOI of the Article.
-        set_publication_link(link: str): Set the publication link of the Article.
-        get_publication_link() -> str: Get the publication link of the Article.
-        get_version() -> int: Get the version of the Article.
-        get_date() -> datetime: Get the date of the Article.
-        get_pub_doi() -> str: Get the publication DOI of the Article.
+    --------
+    - `__init__(*args, **kwargs)`: Initializes the `Article` object with the given arguments and keyword arguments.
+    - `title() -> str`: Returns the title of the article.
+    - `doi() -> str`: Returns the DOI of the article.
+    - `publication_link() -> str`: Returns the publication link of the article.
+    - `publication_link(link: str)`: Sets the publication link of the article.
+    - `version() -> int`: Returns the version of the article.
+    - `date() -> datetime`: Returns the date of the article.
+    - `pub_doi() -> str`: Returns the publication DOI of the article.
+
+    Note: Please note that the format of the attributes and methods may need to be adjusted based on the desired style
+          guidelines.
+
     """
 
     _doi: str
@@ -142,7 +216,7 @@ class Article(BlockBuilder):
     _publication_link: Optional[str]
 
     def __init__(self, *args, **kwargs):
-        super().isvalid(*args, **kwargs)
+        super().not_empty(*args, **kwargs)
         # fields that should have a value when the Article class is instantiated
         fields = ['doi', 'title', 'authors', 'corr_authors', 'institution', 'date',
                   'version', 'type', 'category', 'xml', 'pub_doi']
@@ -181,7 +255,7 @@ class Article(BlockBuilder):
 
 
 @dataclass
-class Journal(BlockBuilder):
+class Journal(BaseObject):
     """
     Initialize the Journal object with the given parameters.
 
@@ -196,7 +270,7 @@ class Journal(BlockBuilder):
     _title: str
 
     def __init__(self, *args, **kwargs):
-        super().isvalid(args, kwargs)
+        super().not_empty(args, kwargs)
         super()._setattr(self, ['title'], **kwargs)
         super()._setattr(self, ['prefix', 'issn'], '', **kwargs)
         super()._setattr(self, ['impact_factor'], 0.0, **kwargs)
@@ -230,14 +304,14 @@ class Journal(BlockBuilder):
         self._issn = issn
 
 
-class Publication(BlockBuilder):
+class Publication(BaseObject):
     _journal: Journal
     _article: Article
     _name: str
     _pub_doi: str
 
     def __init__(self, *args, **kwargs) -> None:
-        super().isvalid(*args, **kwargs)
+        super().not_empty(*args, **kwargs)
         super()._setattr(self, ['journal', 'article'], **kwargs)
         article = self._article
         self._name = f'{article.title}\n{article.pub_doi}'
@@ -289,6 +363,10 @@ class Singleton(type):
     _instance = {}
 
     _lock: Lock = Lock()
+
+    @property
+    def lock(cls):
+        return cls._lock
 
     def __call__(cls, *args, **kwargs):
         """
