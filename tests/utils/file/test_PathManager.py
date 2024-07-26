@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 from datetime import datetime
-from modules.utils.PathManager import PathManager
+from modules.utils.file.PathManager import PathManager
 
 
 class TestPathManager:
