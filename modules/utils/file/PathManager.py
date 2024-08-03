@@ -32,7 +32,7 @@ class PathManager(metaclass=Singleton):
 
     def get_path(self, base_path: str = '') -> str:
         if self._path is None:
-            self.set_path(f'{datetime.now()}/')
+            self.set_path(f'{datetime.now():%Y-%m-%D %H.%M.%S%z}/')
         p = Path(f'{base_path}{self._path}')
         p.mkdir(parents=True, exist_ok=True)
         return f'{base_path}{self._path}'

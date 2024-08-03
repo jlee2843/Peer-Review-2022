@@ -21,23 +21,24 @@ class TestPathManager:
         assert self.pm._path == '/test/path/'
 
     def test_get_path(self):
-        self.pm._path = None
-        assert self.pm.get_path('/base/path') == '/base/path/'
-        assert Path('/base/path').exists()
+        self.pm._path = 'test/path/'
+        assert self.pm.get_path('/base/path/') == '/base/path/test/path/'
+        assert Path('base/path/test/path').exists()
 
-        self.pm._path = '/test/path/'
-        assert self.pm.get_path('/base/path') == '/base/path/test/path/'
-        assert Path('/base/path/test/path').exists()
+        # tmp = datetime.now()
+        self.pm._path = None
+        assert self.pm.get_path('base/path/') == f'base/path/{self.pm._path}'
+        assert Path('base/path').exists()
 
     def test_set_filename(self):
         self.pm.set_filename('file_name')
         assert self.pm._filename == 'file_name'
 
     def test_get_filename(self):
-        timestamp = datetime.utcnow().timestamp()
         self.pm._filename = None
         assert self.pm.get_filename('/base/path', '.ext').startswith('/base/path')
         assert self.pm.get_filename('/base/path', '.ext').endswith('.ext')
+        assert self.pm.get_filename('/base/path/', '.ext') == f'/base/path/{self.pm._filename}'
 
         self.pm._filename = 'file_name'
         assert self.pm.get_filename('/base/path', '.ext') == '/base/pathfile_name'
