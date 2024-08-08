@@ -364,10 +364,6 @@ class Singleton(type):
 
     _lock: Lock = Lock()
 
-    @property
-    def lock(cls):
-        return cls._lock
-
     def __call__(cls, *args, **kwargs):
         """
         Possible changes to the value of the `__init__` argument do not affect

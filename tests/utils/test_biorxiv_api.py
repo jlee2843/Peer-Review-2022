@@ -31,9 +31,9 @@ import pytest
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Article, Journal, Publication, Department, Institution, Category
 from modules.creational.factory_design_pattern import ArticleFactory, JournalFactory, PublicationFactory
-from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
+from modules.utils.database.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
     get_journal_name, create_publication, receive_missing_initial_version_list
-from modules.utils.query import Query, get_web_data, get_json_data, create_df, get_value
+from modules.utils.database.query import Query, get_web_data, get_json_data, create_df, get_value
 
 
 @pytest.fixture()
@@ -262,7 +262,7 @@ def test_create_article(prepub_query):
                        pub_doi=df.loc[row, 'Published'])
 
         assert doi == '10.1101/2021.04.29.21256344'
-        assert ArticleFactory().get_object(identifier=doi) is not None
+        assert ArticleFactory().get_base_object(identifier=doi) is not None
 
 
 def test_create_journal(pubs_query: Query) -> None:
@@ -277,7 +277,7 @@ def test_create_journal(pubs_query: Query) -> None:
     journal = create_journal(get_journal_name(pubs_query))
     assert get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
-    assert journal is JournalFactory().get_object(journal.title)
+    assert journal is JournalFactory().get_base_object(journal.title)
     assert journal.prefix == ''
     assert journal.issn == ''
     assert journal.impact_factor == 0.0
@@ -317,7 +317,7 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     assert article is not None
     journal = create_journal(get_journal_name(pubs_query))
     publication = create_publication(journal, article)
-    assert publication is PublicationFactory().get_object(article.pub_doi)
+    assert publication is PublicationFactory().get_base_object(article.pub_doi)
 
 
 @pytest.fixture

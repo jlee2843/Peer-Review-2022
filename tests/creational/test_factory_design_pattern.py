@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 from modules.creational.factory_design_pattern import *
-from modules.utils.biorxiv_api import process_data, create_article, create_prepublish_df
-from modules.utils.query import create_df
+from modules.utils.database.biorxiv_api import process_data, create_article, create_prepublish_df
+from modules.utils.database.query import create_df
 
 
 @pytest.fixture

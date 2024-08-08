@@ -11,7 +11,7 @@ import pandas as pd
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory, ArticleFactory
-from modules.utils.query import get_value, convert_date, get_json_data, Query
+from modules.utils.database.query import get_value, convert_date, get_json_data, Query
 
 
 def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
@@ -61,7 +61,7 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
 
     # The following line is importing ArticleFactoryfrom modules.creational.factory_design_pattern.ArticleFactory is a
     # factory for creating Article objects in the context of the factory design pattern.
-    article = ArticleFactory().create_object(identifier=doi, *args, **kwargs)
+    article = ArticleFactory().create_base_object(identifier=doi, *args, **kwargs)
     pub_doi = article.pub_doi
     # if created article object has a published DOI then added it to Publication list
     if pub_doi.upper() != 'NA':
@@ -171,7 +171,7 @@ def create_journal(name: str) -> Journal:
     :return: An instance of the Journal class.
 
     """
-    return JournalFactory().create_object(identifier=name)
+    return JournalFactory().create_base_object(identifier=name)
 
 
 # This code is the implementation of the Factory design pattern, where a Factory class PublicationFactory is
@@ -189,4 +189,4 @@ def create_publication(journal: Journal, article: Article) -> Publication:
 
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
-    return PublicationFactory().create_object(article.pub_doi, journal=journal, article=article)
+    return PublicationFactory().create_base_object(article.pub_doi, journal=journal, article=article)
