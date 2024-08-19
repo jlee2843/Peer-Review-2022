@@ -25,7 +25,7 @@ def prepub_test_file():
 
     json_data = json.load(Path(filename).open())
     import numpy as np
-    from modules.utils.biorxiv_api import process_data
+    from modules.utils.database.biorxiv_api import process_data
     result = np.array(process_data(json_data, 'collection', keys, 0))
 
     return result

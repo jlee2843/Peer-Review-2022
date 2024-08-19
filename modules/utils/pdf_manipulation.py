@@ -13,7 +13,7 @@ from pdfminer.pdfpage import PDFPage
 
 
 def extract_fulltext(pdf: Path, layout: LAParams = None, file: Path = None) -> str:
-    from modules.utils.file import save_stringio
+    from modules.utils.file.file import save_stringio
 
     doc: StringIO = StringIO()
     with open(str(pdf), 'rb') as original_file:
