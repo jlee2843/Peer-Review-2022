@@ -1,1 +1,1 @@
-__all__ = ['mediator_design_pattern.py']
+__all__ = ['mediator_design_pattern']
