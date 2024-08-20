@@ -25,6 +25,19 @@ Attributes:
 
 
 def get_publication_info(doi: str) -> Dict:
+    """
+    This method retrieves publication information for a given DOI by using the crossref_commons.retrieval library.
+    It returns the publication information as a dictionary.
+
+    :param doi: The DOI (Digital Object Identifier) of the publication.
+    :return: A dictionary containing information about the publication.
+
+    Example usage:
+    ```
+    publication_info = get_publication_info("10.1234/5678")
+    print(publication_info)
+    ```
+    """
     import crossref_commons.retrieval as xref
 
     import json
@@ -38,21 +51,19 @@ def get_publication_info(doi: str) -> Dict:
 
 def process_publication_info(doi: str, result: Dict):
     """
-    Summary line.
+    Process publication information based on DOI and result.
 
-    Extended description of function.
+    :param doi: A string representing the DOI of the publication.
+    :param result: A dictionary containing the result of the publication query.
 
-    Parameters:
-    arg1 (int): Description of arg1
-
-    Returns:
-    int: Description of return value
+    :return: None
 
     """
     # update publication related objects
     from modules.creational.factory_design_pattern import ArticleFactory
 
     from modules.building_block import Article
+
     article: Article = ArticleFactory.get_object(doi)
     # get publication list
     tmp = process_link(result['link'], 'content-type', 'application/xml')
@@ -62,11 +73,11 @@ def process_publication_info(doi: str, result: Dict):
             ArticleLinkTypeMediator.add_object('web', article)
         else:
             # add url to article
-            article.set_publication_link(tmp)
+            article.publication_link = tmp
             ArticleLinkTypeMediator.add_object('pdf', article)
     else:
         # add url to article
-        article.set_publication_link(tmp)
+        article.publication_link = tmp
         ArticleLinkTypeMediator.add_object('xml', article)
 
 
