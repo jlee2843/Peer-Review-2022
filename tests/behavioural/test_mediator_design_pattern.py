@@ -9,8 +9,8 @@ def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
     test_doi = '10.7554/eLife.72498'
     article = PublishedPrepubArticleMediator().get_object(test_doi)
-    expected = ArticleFactory().get_object(article.get_doi())
-    assert article.get_version() == expected.get_version()
+    expected = ArticleFactory().get_base_object(article.doi)
+    assert article.version == expected.version
 
 # TODO: need to implement a function that receives the initial version of the published article
 @pytest.fixture
@@ -20,7 +20,7 @@ def prepub_test_file():
 
     keys: tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
-    filename = './prepub-test.json'
+    filename = '../../data/prepub-test.json'
     assert Path(filename).exists()
 
     json_data = json.load(Path(filename).open())
