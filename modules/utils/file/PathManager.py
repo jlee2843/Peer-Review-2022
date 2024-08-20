@@ -1,12 +1,10 @@
-from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Union
 
 from modules.building_block import Singleton
 
 
-@dataclass
 class PathManager(metaclass=Singleton):
     def __init__(self):
         self._base_path_name: Union[str, None] = None
@@ -14,7 +12,7 @@ class PathManager(metaclass=Singleton):
         self._filename: Union[str, None] = None
 
     def set_base_path_name(self, base_path: str) -> None:
-        with PathManager.lock:
+        with PathManager._lock:
             if not base_path.endswith('/'):
                 base_path = base_path + '/'
             self._base_path_name = base_path
@@ -25,23 +23,23 @@ class PathManager(metaclass=Singleton):
         return self._base_path_name
 
     def set_path(self, path: str) -> None:
-        with PathManager.lock:
+        with PathManager._lock:
             if not path.endswith('/'):
                 path = path + '/'
             self._path = path
 
     def get_path(self, base_path: str = '') -> str:
         if self._path is None:
-            self.set_path(f'{datetime.now():%Y-%m-%D %H.%M.%S%z}/')
+            self.set_path(f'{datetime.now(timezone.utc):%Y-%m-%D %H.%M.%S%z}/')
         p = Path(f'{base_path}{self._path}')
         p.mkdir(parents=True, exist_ok=True)
         return f'{base_path}{self._path}'
 
     def set_filename(self, filename: str) -> None:
-        with PathManager.lock:
+        with PathManager._lock:
             self._filename = filename
 
     def get_filename(self, path: str = '', ext: str = '.parquet') -> str:
         if self._filename is None:
-            self.set_filename(f'{datetime.utcnow().timestamp()}{ext}')
+            self.set_filename(f'{datetime.now(timezone.utc).timestamp()}{ext}')
         return f'{path}{self._filename}'
