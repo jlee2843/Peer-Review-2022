@@ -384,3 +384,13 @@ class Singleton(type):
                 instance = super().__call__(*args, **kwargs)
                 cls._instance[cls] = instance
         return cls._instance[cls]
+
+
+from enum import Enum
+
+
+class InteractionType(Enum):
+    REMOVE = 1
+    ADD = 2
+    UPDATE = 3
+    GET = 4

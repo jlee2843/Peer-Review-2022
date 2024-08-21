@@ -1,11 +1,13 @@
 import logging
-from typing import Dict, Tuple, Union
+from threading import Lock
+from typing import Dict, Tuple, Union, Any, Optional, List
 
 import pyspark
 from pyspark.sql import SparkSession
-from sortedcontainers import SortedList
+from sortedcontainers import SortedList, SortedDict
 
-from modules.building_block import *
+from modules.building_block import Singleton, MediatorKey, Institution, Publication, Department, Category, Article, \
+    InteractionType
 
 logger = logging.getLogger(__name__)
 
@@ -13,12 +15,15 @@ logger = logging.getLogger(__name__)
 class Mediator(metaclass=Singleton):
 
     def __init__(self):
-        self._mediator_map: Dict[Union[MediatorKey, str], Any] = {}
+        self._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         self._lock: Lock = Lock()
 
-    def add_object(self, mediator_key: Union[MediatorKey, str], item: Any) -> None:
+    def add_object(self, mediator_key: Union[MediatorKey, str], item: Any, default: Any = None) -> None:
+        if default is None:
+            default = SortedList()
+
         with self._lock:
-            values = self._mediator_map.get(mediator_key, [])
+            values = self._mediator_map.get(mediator_key, default)
             if item not in values:
                 values.append(item)
 
@@ -35,13 +40,18 @@ class Mediator(metaclass=Singleton):
         with self._lock:
             for key in self._mediator_map.keys():
                 try:
-                    nodes.append((key, type(key), getattr(key, method_name[0], None)))
-                    for item in self.get_object(key):
-                        nodes.append((item, type(item), getattr(item, method_name[1], None)))
+                    method_attr = getattr(key, method_name[0], None)
+                    nodes.append((key, type(key), method_attr))
+                    for item in self.get_object(key) or []:
+                        item_method_attr = getattr(item, method_name[1], None)
+                        nodes.append((item, type(item), item_method_attr))
                         edges.append((key, type(item), relationship))
                 except AttributeError as e:
                     logger.error(f"Error processing key {key} on {method_name[0]} or "
-                                 f"item {item} on{method_name[1]} {method_name[1]}: {e}")
+                                 f"item {item} on {method_name[1]} {method_name[1]}: {e}")
+                    continue
+                except TypeError as e:
+                    logger.error(f"TypeError: {e}")
 
         nodes_df: pyspark.sql.DataFrame = sql_ctx.createDataFrame(nodes, ['id', 'type', 'name'])
         edges_df: pyspark.sql.DataFrame = sql_ctx.createDataFrame(edges, ['src', 'dst', 'relationship'])
@@ -50,7 +60,7 @@ class Mediator(metaclass=Singleton):
 
 
 class InstitutionPublicationMediator(Mediator):
-    def add_object(self, institution: Institution, publication: Publication) -> None:
+    def add_object(self, institution: Institution, publication: Publication, **kwargs) -> None:
         super().add_object(institution, publication)
 
     def get_object(self, institution: Institution) -> Optional[SortedList[Publication]]:
@@ -58,7 +68,7 @@ class InstitutionPublicationMediator(Mediator):
 
 
 class DepartmentPublicationMediator(Mediator):
-    def add_object(self, dept: Department, publication: Publication) -> None:
+    def add_object(self, dept: Department, publication: Publication, **kwargs) -> None:
         super().add_object(dept, publication)
 
     def get_object(self, dept: Department) -> Optional[SortedList[Publication]]:
@@ -66,7 +76,7 @@ class DepartmentPublicationMediator(Mediator):
 
 
 class CategoryPublicationMediator(Mediator):
-    def add_object(self, category: Category, publication: Publication) -> None:
+    def add_object(self, category: Category, publication: Publication, **kwargs) -> None:
         super().add_object(category, publication)
 
     def get_object(self, category: Category) -> Optional[SortedList[Publication]]:
@@ -74,7 +84,7 @@ class CategoryPublicationMediator(Mediator):
 
 
 class ArticleLinkTypeMediator(Mediator):
-    def add_object(self, link_type: str, article: Article) -> None:
+    def add_object(self, link_type: str, article: Article, **kwargs) -> None:
         super().add_object(link_type, article)
 
     def get_object(self, link_type: str) -> Optional[SortedList[Article]]:
@@ -82,26 +92,46 @@ class ArticleLinkTypeMediator(Mediator):
 
 
 class PublishedPrepubArticleMediator(Mediator):
+    def __init__(self):
+        super().__init__()
+        self._retrieve_initial_prepub_articles: SortedList[str] = SortedList()
+
+    def _remove_doi_from_retrieval_list(self, doi: str) -> None:
+        self._prepub_article_list_interaction(InteractionType.REMOVE, doi=doi)
+
+    def _add_doi_to_retrieval_list(self, doi: str) -> None:
+        self._prepub_article_list_interaction(InteractionType.ADD, doi=doi)
+
+    def _get_retrieve_initial_prepub_articles(self) -> SortedList[str]:
+        return self._prepub_article_list_interaction(InteractionType.GET)
+
+    def _prepub_article_list_interaction(self, interaction: InteractionType, doi=None) -> SortedList[str]:
+        with self._lock:
+            match interaction:
+                case interaction.ADD:
+                    if doi not in self._retrieve_initial_prepub_articles:
+                        self._retrieve_initial_prepub_articles.add(doi)
+                case interaction.REMOVE:
+                    self._retrieve_initial_prepub_articles.discard(doi)
+                case interaction.GET:
+                    pass
+
+            return self._retrieve_initial_prepub_articles
+
     # TODO: need to rethink structure maybe: {pub_doi, {article.version, article}}
-    def add_object(self, pub_doi: str, article: Article) -> None:
-        with (self._lock):
-            add_article: bool = False
-            values: Optional[SortedList[Article]] = self.get_article_list(pub_doi)
-            if values is None:
-                values = SortedList()
-                add_article = True
-            elif article.version <= values[0].version and article.date < values[0].date:
-                add_article = True
+    def add_object(self, pub_doi: str, article: Article, **kwargs) -> None:
+        with self._lock:
+            article_version_map: Optional[SortedDict[int, Article]] = self.get_object(pub_doi) or SortedDict()
+            tmp: Article = self.get_article_version(pub_doi, article.version)
+            if tmp is None or (article.version <= tmp.version and article.date < tmp.date):
+                article_version_map.update({article.version: article})
+                self._mediator_map[pub_doi] = article_version_map
 
-            if add_article:
-                super().get_object(pub_doi)
-                self._mediator_map.update({pub_doi: values})
+            if article.version == 1:
+                self._remove_doi_from_retrieval_list(pub_doi)
+            else:
+                self._add_doi_to_retrieval_list(pub_doi)
 
-    def get_article_list(self, pub_doi: str) -> Optional[SortedList[Article]]:
-        return super().get_object(pub_doi)
-
-    def get_object(self, pub_doi: str) -> Optional[Article]:
-        result = self.get_article_list(pub_doi)
-        if result is not None:
-            result = result[0]
-        return result
+    def get_article_version(self, pub_doi: str, version: int) -> Optional[Article]:
+        tmp: SortedDict[int, Article] = self.get_object(pub_doi)
+        return None if tmp is None else tmp.get(version)
