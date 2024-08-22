@@ -1,4 +1,5 @@
 import logging
+from abc import abstractmethod, ABC
 from threading import Lock
 from typing import Dict, Tuple, Union, Any, Optional, List
 
@@ -12,12 +13,14 @@ from modules.building_block import Singleton, MediatorKey, Institution, Publicat
 logger = logging.getLogger(__name__)
 
 
-class Mediator(metaclass=Singleton):
+# TODO: need to redo since deadlock has occurred.
+class Mediator(metaclass=Singleton, ABC):
 
     def __init__(self):
         self._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         self._lock: Lock = Lock()
 
+    @abstractmethod
     def add_object(self, mediator_key: Union[MediatorKey, str], item: Any, default: Any = None) -> None:
         if default is None:
             default = SortedList()
@@ -57,6 +60,20 @@ class Mediator(metaclass=Singleton):
         edges_df: pyspark.sql.DataFrame = sql_ctx.createDataFrame(edges, ['src', 'dst', 'relationship'])
 
         return nodes_df, edges_df
+
+    def _mediator_map_interaction(self, interaction: InteractionType, key: Union[MediatorKey, str],
+                                  value: Union[SortedList[Any], SortedDict[int, Article]]) -> \
+            Union[SortedList[Any], SortedDict[int, Article], None]:
+        with self._lock:
+            match interaction:
+                case interaction.ADD:
+                    if doi not in self._retrieve_initial_prepub_articles:
+                        self._retrieve_initial_prepub_articles.add(doi)
+                case interaction.REMOVE:
+                    self._retrieve_initial_prepub_articles.discard(doi)
+                case interaction.GET:
+                    return self._mediator_map.get(key)
+
 
 
 class InstitutionPublicationMediator(Mediator):
