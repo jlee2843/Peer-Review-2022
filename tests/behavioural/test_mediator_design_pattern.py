@@ -9,9 +9,17 @@ from tests.creational.test_factory_design_pattern import load_article_factory_da
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
     test_doi = '10.7554/eLife.72498'
-    article: Article = PublishedPrepubArticleMediator().get_object(test_doi)
+    article: Article = PublishedPrepubArticleMediator().get_article_first_entry(test_doi)
     expected: Article = ArticleFactory().get_base_object(article.doi)
     assert article.version == expected.version
+
+
+def test_get_article_first_entry(prepub_test_file):
+    load_article_factory_dataframe(prepub_test_file)
+    test_doi = '10.7554/eLife.72498'
+    article: Article = PublishedPrepubArticleMediator().get_article_first_entry(test_doi)
+    assert article.version == 4
+    assert test_doi in PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
 
 # TODO: need to implement a function that receives the initial version of the published article
 @pytest.fixture
