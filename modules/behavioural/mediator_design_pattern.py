@@ -65,7 +65,6 @@ class Mediator(metaclass=Singleton):
                     return self._mediator_map.get(key)
 
 
-
 class InstitutionPublicationMediator(Mediator):
     def add_object(self, institution: Institution, publication: Publication, **kwargs) -> None:
         value: SortedList = self.get_object(institution) or SortedList()
@@ -148,19 +147,19 @@ class PublishedPrepubArticleMediator(Mediator):
             article_version_map.update({article.version: article})
             super().add_object(pub_doi, article_version_map)
 
+        first_entry: Optional[Article] = self.get_article_first_entry(pub_doi)
         if article.version == 1:
             self._remove_doi_from_retrieval_list(pub_doi)
-        else:
+        elif first_entry is not None and first_entry.version != 1:
             self._add_doi_to_retrieval_list(pub_doi)
 
     def get_article_version(self, pub_doi: str, version: int) -> Optional[Article]:
         tmp: SortedDict[int, Article] = self.get_object(pub_doi)
         return None if tmp is None else tmp.get(version)
 
+    def get_article_first_entry(self, pub_doi: str) -> Optional[Article]:
+        tmp: SortedDict[int, Article] = self.get_object(pub_doi)
 
-def get_article_first_entry(self, pub_doi: str) -> Optional[Article]:
-    tmp: SortedDict[int, Article] = self.get_object(pub_doi)
-
-    if tmp is not None:
-        tmp1: SortedList = SortedList(tmp.keys())
-        return self.get_article_version(pub_doi, tmp1[0])
+        if tmp is not None:
+            tmp1: SortedList = SortedList(tmp.keys())
+            return self.get_article_version(pub_doi, tmp1[0])
