@@ -1,0 +1,41 @@
+{
+  "messages": [
+    {
+      "status": "ok"
+    }
+  ],
+  "collection": [
+    {
+      "doi": "10.1101\/001768",
+      "title": "Quantification of nuclear transport in single cells",
+      "authors": "Lucía Durrieu;Rikard Johansson;Alan Bush;David L.I. Janzén;Martin Gollvik;Gunnar Cedersund;Alejandro Colman-Lerner;",
+      "author_corresponding": "Alejandro  Colman-Lerner",
+      "author_corresponding_institution": "IFIByNE, DFBMC, FCEN, UBA, Buenos Aires, Argentine",
+      "date": "2014-01-13",
+      "version": "1",
+      "type": "New Results",
+      "license": "cc_by_nc_nd",
+      "category": "Biophysics ",
+      "jatsxml": "https:\/\/www.biorxiv.org\/content\/early\/2014\/01\/13\/001768.source.xml",
+      "abstract": "Nuclear transport is an essential part of eukaryotic cell function. Several assays exist to measure the rate of this process, but not at the single-cell level. Here, we developed a fluorescent recovery after photobleaching (FRAP)- based method to determine nuclear import and export rates independently in individual live cells. To overcome the inherent noise of single-cell measurements, we performed sequential FRAPs on the same cell. We found large cell-to-cell variation in transport rates within isogenic yeast populations. Our data suggest that a main determinant of this heterogeneity may be variability in the number of nuclear pore complexes (NPCs). For passive transport, this component explained most of the variability. Actively transported proteins were influenced by variability in additional components, including general factors such as the Ran-GTP gradient as well as specific regulators of the export rate. By considering mother-daughter pairs, we showed that mitotic segregation of the transport machinery is too noisy to control cellular inheritance. Finally, we studied mother-daughter cell asymmetry in the localization of the transcription factor Ace2, which is specifically concentrated in daughter cell nuclei. We found that this asymmetry is the outcome of a higher ratio of import rate to export rate in daughters. Interestingly, rather than reduced export in the daughter cell, as previously hypothesized, rates of both import and export are faster in daughter cells than in mother cells, but the magnitude of increase is greater for import. These results shed light into cell-to-cell variation in cellular dynamics and its sources.",
+      "published": "10.1016\/j.isci.2022.105906",
+      "server": "biorxiv"
+    },
+    {
+      "doi": "10.1101\/001768",
+      "title": "Characterization of cell-to-cell variation in nuclear transport rates and identification of its sources",
+      "authors": "Durrieu, L.; Bush, A.; Grande, A.; Johansson, R.; Janzen, D. L. I.; Gollvik, M.; Katz, A.; Cedersund, G.; Colman-Lerner, A.",
+      "author_corresponding": "Alejandro  Colman-Lerner",
+      "author_corresponding_institution": "IFIByNE, DFBMC, FCEN, UBA, Buenos Aires, Argentine",
+      "date": "2022-06-24",
+      "version": "2",
+      "type": "new results",
+      "license": "cc_by_nc_nd",
+      "category": "systems biology",
+      "jatsxml": "https:\/\/www.biorxiv.org\/content\/early\/2022\/06\/24\/001768.source.xml",
+      "abstract": "Nuclear transport is an essential part of eukaryotic cell function. Several assays exist to measure the rate of this process, but not at the single-cell level. Here, we developed a fluorescent recovery after photobleaching (FRAP)- based method to determine nuclear import and export rates independently in individual live cells. To overcome the inherent noise of single-cell measurements, we performed sequential FRAPs on the same cell. We found large cell-to-cell variation in transport rates within isogenic yeast populations. Our data suggest that a main determinant of this heterogeneity may be variability in the number of nuclear pore complexes (NPCs). For passive transport, this component explained most of the variability. Actively transported proteins were influenced by variability in additional components, including general factors such as the Ran-GTP gradient as well as specific regulators of the export rate. By considering mother-daughter pairs, we showed that mitotic segregation of the transport machinery is too noisy to control cellular inheritance. Finally, we studied mother-daughter cell asymmetry in the localization of the transcription factor Ace2, which is specifically concentrated in daughter cell nuclei. We found that this asymmetry is the outcome of a higher ratio of import rate to export rate in daughters. Interestingly, rather than reduced export in the daughter cell, as previously hypothesized, rates of both import and export are faster in daughter cells than in mother cells, but the magnitude of increase is greater for import. These results shed light into cell-to-cell variation in cellular dynamics and its sources.",
+      "published": "10.1016\/j.isci.2022.105906",
+      "server": "biorxiv"
+    }
+  ]
+}
