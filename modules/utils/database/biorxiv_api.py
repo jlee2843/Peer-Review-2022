@@ -10,7 +10,7 @@ import pandas as pd
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
-from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory, ArticleFactory
+from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
 from modules.utils.database.query import get_value, convert_date, get_json_data, Query
 
 
@@ -128,24 +128,6 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         print(e.with_traceback)
 
     return df
-
-
-def receive_missing_initial_version_list() -> List[str]:
-    """
-    Fetches a list of DOIs for articles that have a version number other than 1.
-
-    :return: A list of DOIs for articles with non-initial versions.
-    :rtype: List[str]
-
-    """
-    result: List[str] = []
-    dois: List[str] = ArticleFactory().get_publication_list()
-    for doi in dois:
-        article = PublishedPrepubArticleMediator().get_object(doi)
-        if article.version != 1:
-            result.append(article.doi)
-
-    return result
 
 
 def get_journal_name(query: Query, key: str = 'published_journal') -> str:

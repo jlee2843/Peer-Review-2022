@@ -9,7 +9,7 @@ import pytest
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.creational.factory_design_pattern import *
 from modules.utils.database.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
-    get_journal_name, receive_missing_initial_version_list, create_publication
+    get_journal_name, create_publication
 from modules.utils.database.query import create_df, Query, get_json_data
 
 
@@ -228,7 +228,7 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
 
     df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.get_col_names()))
     load_articles(df)
-    missing_items: List[str] = receive_missing_initial_version_list()
+    missing_items: SortedList[str] = PublishedPrepubArticleMediator.get_missing_initial_prepub_articles_list()
     url = 'https://api.biorxiv.org/details/biorxiv/'
     articles: List[Article] = []
     for missing in missing_items:

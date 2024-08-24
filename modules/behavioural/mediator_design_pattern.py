@@ -142,7 +142,7 @@ class PublishedPrepubArticleMediator(Mediator):
     # TODO: need to rethink structure maybe: {pub_doi, {article.version, article}}
     def add_object(self, pub_doi: str, article: Article, **kwargs) -> None:
         article_version_map: Optional[SortedDict[int, Article]] = self.get_object(pub_doi) or SortedDict()
-        tmp: Article = self.get_article_version(pub_doi, article.version)
+        tmp: Optional[Article] = self.get_article_version(pub_doi, article.version)
         if tmp is None or (article.version <= tmp.version and article.date < tmp.date):
             article_version_map.update({article.version: article})
             super().add_object(pub_doi, article_version_map)
@@ -150,8 +150,9 @@ class PublishedPrepubArticleMediator(Mediator):
         first_entry: Optional[Article] = self.get_first_stored_article_version(pub_doi)
         if article.version == 1:
             self._remove_doi_from_retrieval_list(pub_doi)
-        elif first_entry is not None and first_entry.version != 1:
-            self._add_doi_to_retrieval_list(pub_doi)
+        elif first_entry is not None:
+            if first_entry.version != 1:
+                self._add_doi_to_retrieval_list(pub_doi)
 
     def get_article_version(self, pub_doi: str, version: int) -> Optional[Article]:
         tmp: SortedDict[int, Article] = self.get_object(pub_doi)
