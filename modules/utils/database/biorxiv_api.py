@@ -11,7 +11,7 @@ import pandas as pd
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
-from modules.utils.database.query import get_value, convert_date, get_json_data, Query
+from modules.utils.database.connection_processing import get_value, convert_date, get_json_data, Query
 
 
 def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:

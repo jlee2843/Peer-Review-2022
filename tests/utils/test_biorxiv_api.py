@@ -27,7 +27,7 @@ from typing import Tuple, List, Union, Any
 import pytest
 
 from modules.utils.database.biorxiv_api import process_data
-from modules.utils.database.query import Query, get_web_data, get_json_data, get_value
+from modules.utils.database.connection_processing import Query, get_web_data, get_json_data, get_value
 
 
 @pytest.fixture()
