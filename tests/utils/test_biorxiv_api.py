@@ -26,8 +26,9 @@ from typing import Tuple, List, Union, Any
 
 import pytest
 
+from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.utils.database.biorxiv_api import process_data
-from modules.utils.database.connection_processing import Query, get_web_data, get_json_data, get_value
+from modules.utils.database.connection_processing import get_web_data, get_json_data, get_value
 
 
 @pytest.fixture()
@@ -43,7 +44,7 @@ def query():
                    'version', 'type', 'category', 'jatsxml', 'published')
     col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
                        "Category", "Xml", "Published"]
-    query = Query(url, keys, col_names)
+    query = BioRvixQuery(url, keys, col_names)
 
     return query
 
@@ -73,7 +74,7 @@ def pubs_query() -> Query:
     col_names: List = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Category",
                        "Journal", "Preprint_Date", "Published_Date"]
 
-    return Query(url, keys, col_names)
+    return BioRvixQuery(url, keys, col_names)
 
 
 @pytest.fixture()
@@ -102,7 +103,7 @@ def test_get_query_result(query: Query) -> None:
 
     """
 
-    result = get_web_data(0, query.get_url(), 'json')
+    result = query.execute()
     assert result is not None
 
 
