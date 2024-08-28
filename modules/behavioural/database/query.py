@@ -1,9 +1,11 @@
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from threading import RLock
 from typing import Tuple, List, Any
 
-from modules.utils.database.connection_processing import get_web_data
+import requests
+from requests import HTTPError, Response
 
 
 @dataclass
@@ -45,6 +47,10 @@ class Query(ABC):
     def result(self) -> Any:
         return self._result
 
+    @result.setter
+    def result(self, result: Any):
+        _result = result
+
     @property
     def keys(self):
         return self._keys
@@ -60,6 +66,81 @@ class Query(ABC):
     @abstractmethod
     def execute(self, attr: str = 'json'):
         pass
+
+    def get_json_data(self, counter: int, cursor: int) -> tuple[int, Any]:
+        """
+        Retrieve JSON data from a web service.
+
+        :param counter: The counter value to be passed to the web service.
+        :param cursor: The cursor value to be passed to the web service.
+        :return: A tuple containing the updated cursor value and the query object with the JSON data set as the result.
+        """
+
+        self.result = self.get_web_data(counter, self.url, "json")
+        return cursor, self
+
+    @staticmethod
+    def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
+        """
+        Retrieves web data from the given URL based on the specified attribute.
+
+        :param counter: The number of connection attempts to make.
+        :param url: The URL from which to retrieve the web data.
+        :param attr: The attribute to retrieve from the web data. Default is "text".
+                     Valid values are "text", "content", and "json".
+        :return: The retrieved web data in text format (default), json format, or in byte format.
+        :raises ValueError: If the specified attribute is not valid (not 'text', 'content', or 'json').
+        """
+
+        result: Any = None
+        valid = ['text', 'content', 'json']
+        attr = attr.strip().lower()
+
+        if attr not in valid:
+            raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
+
+        try:
+            if attr == 'json':
+                result = getattr(Query.connect_url(counter, url), attr)()
+            else:
+                result = getattr(Query.connect_url(counter, url), attr)
+
+        except TypeError:
+            pass
+        finally:
+            return result
+
+    @staticmethod
+    def connect_url(counter: int, url: str) -> Response:
+        """
+
+        Connect to the specified URL.
+
+        :param counter: The number of times the connection has been attempted.
+        :type counter: int
+
+        :param url: The URL to connect to.
+        :type url: str
+
+        :return: The HTTP response from the URL.
+        :rtype: Response
+
+        """
+
+        response: Response = Response()
+
+        try:
+            response = requests.get(url)
+        except Exception as e:
+            if counter == 10:
+                raise HTTPError from e
+
+            time.sleep(300)
+            return Query.connect_url(counter + 1, url)
+
+        finally:
+            response.raise_for_status()
+            return response
 
 
 # noinspection PyUnresolvedReferences
@@ -81,6 +162,7 @@ class BioRvixQuery(Query):
             Executes the query and returns the result.
 
     """
+
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str], cursor: int = 0) -> None:
         with self._lock:
             super().__init__(url, keys, col_names)
@@ -92,5 +174,5 @@ class BioRvixQuery(Query):
 
     def execute(self, attr: str = 'json') -> Any:
         with self._lock:
-            self._result = get_web_data(self.cursor, self.url, attr)
+            self.result = Query.get_web_data(self.cursor, self.url, attr)
         return self.result

@@ -10,7 +10,7 @@ from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMe
 from modules.creational.factory_design_pattern import *
 from modules.utils.database.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
     get_journal_name, create_publication
-from modules.utils.database.connection_processing import create_df, Query, get_json_data
+from modules.utils.database.process_query_results import create_df, Query, get_json_data
 
 
 @pytest.fixture()

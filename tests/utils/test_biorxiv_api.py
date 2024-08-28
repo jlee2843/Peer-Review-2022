@@ -28,7 +28,7 @@ import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.utils.database.biorxiv_api import process_data
-from modules.utils.database.connection_processing import get_web_data, get_json_data, get_value
+from modules.utils.database.process_query_results import get_web_data, get_json_data, get_value
 
 
 @pytest.fixture()
@@ -115,8 +115,8 @@ def test_get_pubs_query_result(pubs_query: Query) -> None:
     :param pubs_query: An instance of the Query class containing the query information.
     :return: None.
     """
-    pubs_query.set_result(get_web_data(0, pubs_query.get_url(), 'json'))
-    assert pubs_query.get_result() is not None
+    pubs_query.execute()
+    assert pubs_query.result is not None
 
 
 def test_get_web_data(query: Query) -> None:
@@ -131,7 +131,7 @@ def test_get_web_data(query: Query) -> None:
                              result is not an instead of bytes when the attr parameter to get_web_data is 'content'
     """
 
-    url: str = query.get_url()
+    url: str = query.url
     result = get_web_data(0, url, 'json')
     assert isinstance(result, dict)
     result = get_web_data(0, url)
@@ -156,11 +156,11 @@ def test_valid_attr(query):
     """
 
     try:
-        get_web_data(0, query.get_url(), 'TEXT')
-        get_web_data(0, query.get_url(), 'text ')
-        get_web_data(0, query.get_url(), ' text')
-        get_web_data(0, query.get_url(), ' text ')
-        get_web_data(0, query.get_url(), '\n\ttext')
+        get_web_data(0, query.url, 'TEXT')
+        get_web_data(0, query.url, 'text ')
+        get_web_data(0, query.url, ' text')
+        get_web_data(0, query.url, ' text ')
+        get_web_data(0, query.url, '\n\ttext')
     except ValueError as exc:
         assert False, f'get_web_data: {exc}'
 
@@ -169,8 +169,8 @@ def test_key_values(prepub_query, query):
     keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
 
-    assert prepub_query.get_keys() == query.get_keys()
-    assert keys == prepub_query.get_keys()
+    assert prepub_query.keys == query.keys
+    assert keys == prepub_query.keys
 
 
 def test_key_values_published(pub_query, pubs_query):
@@ -178,8 +178,8 @@ def test_key_values_published(pub_query, pubs_query):
         "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
         "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
         "published_date")
-    assert pub_query.get_keys() == pubs_query.get_keys()
-    assert keys == pub_query.get_keys()
+    assert pub_query.keys == pubs_query.keys
+    assert keys == pub_query.keys
 
 
 def test_process_data_preprint(prepub_query: Query) -> None:
@@ -212,14 +212,12 @@ def test_process_data_published(pub_query: Query) -> None:
 
 
 def process_biorxiv_query(query: Query, attr: str) -> None:
-    result: dict = query.get_result()['collection'][0]
-    collection: List = list(result.keys())
+    result: dict = query.result['collection'][0]
+    collection: List = list(result.keys)
     try:
         _ = [get_value(result, key) for key in collection]
     except KeyError as exc:
         assert False, f'raised an exception {exc}'
 
-    tmp = process_data(query.get_result(), 'collection', query.get_keys(), 0)
-    assert tmp[0][1] == query.get_result()['collection'][0].get(attr)
-
-
+    tmp = process_data(query.result, 'collection', query.keys, 0)
+    assert tmp[0][1] == query.result['collection'][0].get(attr)

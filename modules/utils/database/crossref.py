@@ -93,7 +93,7 @@ def process_link(links: List[Dict], key: str, value: str) -> Union[str, None]:
 
 
 def valid_link(url: str) -> bool:
-    from modules.utils.database.connection_processing import connect_url
+    from modules.utils.database.process_query_results import connect_url
 
     from requests import HTTPError
 
