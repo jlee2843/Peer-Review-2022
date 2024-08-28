@@ -64,27 +64,15 @@ class Query(ABC):
         return self._col_names
 
     @abstractmethod
-    def execute(self, attr: str = 'json'):
+    def execute(self, *args, **kwargs):
         pass
-
-    def get_json_data(self, counter: int, cursor: int) -> tuple[int, Any]:
-        """
-        Retrieve JSON data from a web service.
-
-        :param counter: The counter value to be passed to the web service.
-        :param cursor: The cursor value to be passed to the web service.
-        :return: A tuple containing the updated cursor value and the query object with the JSON data set as the result.
-        """
-
-        self.result = self.get_web_data(counter, self.url, "json")
-        return cursor, self
 
     @staticmethod
     def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
         """
         Retrieves web data from the given URL based on the specified attribute.
 
-        :param counter: The number of connection attempts to make.
+        :param counter: The number of connection attempts to have been made.
         :param url: The URL from which to retrieve the web data.
         :param attr: The attribute to retrieve from the web data. Default is "text".
                      Valid values are "text", "content", and "json".
@@ -163,16 +151,27 @@ class BioRvixQuery(Query):
 
     """
 
-    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], cursor: int = 0) -> None:
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0) -> None:
         with self._lock:
             super().__init__(url, keys, col_names)
-            self._cursor = cursor
+            self._page = page
 
     @property
-    def cursor(self) -> int:
-        return self._cursor
+    def page(self) -> int:
+        return self._page
 
-    def execute(self, attr: str = 'json') -> Any:
+    def get_json_data(self, counter: int = 0):
+        """
+        Retrieve JSON data from a web service.
+
+        :param counter: The number of connection attempts that have been made.
+        :param page: The page the query belongs to.
+        :return: A tuple containing the updated page value and the query object with the JSON data set as the result.
+        """
+
         with self._lock:
-            self.result = Query.get_web_data(self.cursor, self.url, attr)
-        return self.result
+            self.result = self.get_web_data(counter, self.url, "json")
+        return page, self
+
+    def execute(self, counter: int):
+        return self.get_json_data(counter)
