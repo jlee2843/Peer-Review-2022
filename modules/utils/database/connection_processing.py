@@ -1,10 +1,92 @@
+import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Tuple, Any, Dict, List
 
 import doi
 import numpy as np
 import pandas as pd
+import requests
 from pandas import Series
+from requests import Response, HTTPError
+
+from modules.utils.database.query import Query
+
+
+def get_json_data(counter: int, cursor: int, query: Query) -> Tuple[int, Query]:
+    """
+    Retrieve JSON data from a web service.
+
+    :param counter: The counter value to be passed to the web service.
+    :param cursor: The cursor value to be passed to the web service.
+    :param query: The query object containing the URL and other parameters.
+    :return: A tuple containing the updated cursor value and the query object with the JSON data set as the result.
+    """
+
+    query.set_result(get_web_data(counter, query.get_url(), "json"))
+    return cursor, query
+
+
+def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
+    """
+    Retrieves web data from the given URL based on the specified attribute.
+
+    :param counter: The number of connection attempts to make.
+    :param url: The URL from which to retrieve the web data.
+    :param attr: The attribute to retrieve from the web data. Default is "text".
+                 Valid values are "text", "content", and "json".
+    :return: The retrieved web data in text format (default), json format, or in byte format.
+    :raises ValueError: If the specified attribute is not valid (not 'text', 'content', or 'json').
+    """
+
+    result: Any = None
+    valid = ['text', 'content', 'json']
+    attr = attr.strip().lower()
+
+    if attr not in valid:
+        raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
+
+    try:
+        if attr == 'json':
+            result = getattr(connect_url(counter, url), attr)()
+        else:
+            result = getattr(connect_url(counter, url), attr)
+
+    except TypeError:
+        pass
+    finally:
+        return result
+
+
+def connect_url(counter: int, url: str) -> Response:
+    """
+
+    Connect to the specified URL.
+
+    :param counter: The number of times the connection has been attempted.
+    :type counter: int
+
+    :param url: The URL to connect to.
+    :type url: str
+
+    :return: The HTTP response from the URL.
+    :rtype: Response
+
+    """
+
+    response: Response = Response()
+
+    try:
+        response = requests.get(url)
+    except Exception as e:
+        if counter == 10:
+            raise HTTPError from e
+
+        time.sleep(300)
+        return connect_url(counter + 1, url)
+
+    finally:
+        response.raise_for_status()
+        return response
 
 
 def check_doi(x: str):
@@ -117,5 +199,4 @@ def create_df(x: np.ndarray, y: List[str]) -> pd.DataFrame:
 # create_df = lambda x, y: pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
 
 if __name__ == '__main__':
-    # get_web_data(counter=0, url='hello', attr='.')
-    pass
+    get_web_data(counter=0, url='hello', attr='.')
