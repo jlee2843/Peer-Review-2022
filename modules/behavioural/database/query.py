@@ -11,6 +11,7 @@ MAX_ATTEMPTS: int = 10
 SLEEP_INTERVAL: int = 300
 VALID_ATTRIBUTES: Set[str] = {'text', 'content', 'json'}
 
+
 @dataclass
 class Query(ABC):
     """
@@ -35,7 +36,8 @@ class Query(ABC):
     Static Methods:
         retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any: Retrieve web data from the
                                                                                         specified URL.
-        _get_response_content(response: Response, attribute: str) -> Any: Get the content of the HTTP response based on the specified attribute.
+        _get_response_content(response: Response, attribute: str) -> Any: Get the content of the HTTP response based on
+                                                                          the specified attribute.
         make_request(attempts: int, url: str) -> Response: Make an HTTP request to the specified URL.
 
     Exceptions:
