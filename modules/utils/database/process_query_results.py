@@ -1,5 +1,6 @@
+import time
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import doi
 import numpy as np
@@ -114,8 +115,31 @@ def create_df(x: np.ndarray, y: List[str]) -> pd.DataFrame:
     return pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
 
 
-# create_df = lambda x, y: pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
+def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
+    """
+    Process data based on provided parameters.
+
+    :param json_info: A dictionary containing JSON data.
+    :param section: A string representing the section of the JSON data to process.
+    :param keys: A tuple of strings representing the keys to extract from each journal entry.
+    :param cursor: An integer representing the cursor value to increment each journal entry by.
+    :param disable: A boolean indicating whether a delay should be applied before processing (default is True).
+    :return: A list of lists representing processed data from journal entries.
+    """
+
+    # a list comprehension is created with a nested list comprehension inside.
+    # The outer list comprehension enumerates over entries in the section of the input json_info.
+    # Each enumerated entry is incremented by cursor and each journal entry is processed to determine its key's value
+    # using the get_value(journal, key) function call.
+    journal_list = [[entry + cursor] + [get_value(journal, key) for key in keys] for entry, journal in
+                    enumerate(json_info[section])]
+    if disable is False:
+        time.sleep(60)
+
+    # The function returns a list of lists(journal_list), where each inner list represents processed data from a journal
+    # entry.
+    return journal_list
+
 
 if __name__ == '__main__':
-    # get_web_data(counter=0, url='hello', attr='.')
     pass

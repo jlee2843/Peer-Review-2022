@@ -16,32 +16,6 @@ from modules.creational.factory_design_pattern import JournalFactory, Publicatio
 from modules.utils.database.process_query_results import get_value, convert_date
 
 
-def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
-    """
-    Process data based on provided parameters.
-
-    :param json_info: A dictionary containing JSON data.
-    :param section: A string representing the section of the JSON data to process.
-    :param keys: A tuple of strings representing the keys to extract from each journal entry.
-    :param cursor: An integer representing the cursor value to increment each journal entry by.
-    :param disable: A boolean indicating whether a delay should be applied before processing (default is True).
-    :return: A list of lists representing processed data from journal entries.
-    """
-
-    # a list comprehension is created with a nested list comprehension inside.
-    # The outer list comprehension enumerates over entries in the section of the input json_info.
-    # Each enumerated entry is incremented by cursor and each journal entry is processed to determine its key's value
-    # using the get_value(journal, key) function call.
-    journal_list = [[entry + cursor] + [get_value(journal, key) for key in keys] for entry, journal in
-                    enumerate(json_info[section])]
-    if disable is False:
-        time.sleep(60)
-
-    # The function returns a list of lists(journal_list), where each inner list represents processed data from a journal
-    # entry.
-    return journal_list
-
-
 # The create_article function uses the Factory and Mediator Design Patterns.
 def create_article(doi: str, *args: object, **kwargs: object) -> Article:
     """
