@@ -194,3 +194,8 @@ def multithread_processor(path:str, url:str, json_keys:List[str], col_names:List
 def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[Query]:
     return [BioRvixQuery(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name, page=cursor // step) for cursor in
             range(0, total, step)]
+
+
+def process_query_list(query_list: List[Query]) -> List[Tuple[int, BioRvixQuery]]:
+    import tqdm.contrib.concurrent as tq
+    return tq.thread_map(lambda p: p.execute(), query_list, desc='BioRvix.execute()', total=len(query_list))
