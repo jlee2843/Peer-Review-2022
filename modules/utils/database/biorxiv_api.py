@@ -1,6 +1,6 @@
 """
-The iorvix_api module contains functions that interacts with the BioRxiv database through its API and processes the
-information that is retreived from the Biorxiv database.
+The BioRvix_api module contains functions that interacts with the BioRvix database through its API and processes the
+information that is retrieved from the BioRvix database.
 """
 
 import time
@@ -8,7 +8,7 @@ from typing import List, Tuple
 
 import pandas as pd
 
-from modules.behavioural.database.query import Query
+from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
@@ -60,7 +60,7 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
     """
     from modules.creational.factory_design_pattern import ArticleFactory
 
-    # The following line is importing ArticleFactoryfrom modules.creational.factory_design_pattern.ArticleFactory is a
+    # The following line is importing ArticleFactory from modules.creational.factory_design_pattern.ArticleFactory is a
     # factory for creating Article objects in the context of the factory design pattern.
     article = ArticleFactory().create_base_object(identifier=doi, *args, **kwargs)
     pub_doi = article.pub_doi
@@ -192,4 +192,5 @@ def multithread_processor(path:str, url:str, json_keys:List[str], col_names:List
 
 
 def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[Query]:
-    return [Query(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name) for cursor in range(0, total, step)]
+    return [BioRvixQuery(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name, page=cursor // step) for cursor in
+            range(0, total, step)]
