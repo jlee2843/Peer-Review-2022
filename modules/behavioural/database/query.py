@@ -1,174 +1,126 @@
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from threading import RLock
-from typing import Tuple, List, Any
+from dataclasses import dataclass, field
+from threading import Lock
+from typing import Tuple, List, Any, Set
 
 import requests
-from requests import HTTPError, Response
+from requests import HTTPError, Response, RequestException
 
+MAX_ATTEMPTS: int = 10
+SLEEP_INTERVAL: int = 300
+VALID_ATTRIBUTES: Set[str] = {'text', 'content', 'json'}
 
 @dataclass
 class Query(ABC):
     """
-    This class represents a Query object for executing database queries.
+    A base class for querying web data and making HTTP requests.
 
     Attributes:
-        _url (str): The URL of the database.
-        _keys (Tuple[str]): The keys required for authentication.
-        _col_names (List[str]): The names of the columns in the result set.
-        _result: The result of the executed query.
+        _url (str): The URL of the web resource.
+        _keys (Tuple[str]): A tuple of keys used in the query.
+        _col_names (List[str]): A list of column names for the result.
+        _result (Any): The result of the query.
+        _lock (Lock): A lock for thread safety.
+
+    Properties:
+        result (Any): The result of the query. This property is thread-safe.
+        keys (Tuple[str]): The keys used in the query. This property is thread-safe.
+        url (str): The URL of the web resource. This property is thread-safe.
+        col_names (List[str]): The column names for the result. This property is thread-safe.
 
     Methods:
-        result (property): Getter for the result attribute.
-        keys (property): Getter for the keys attribute.
-        url (property): Getter for the url attribute.
-        col_names (property): Getter for the col_names attribute.
-        execute (abstractmethod): Executes the query.
+        execute(*args, **kwargs): Execute the query. This method is abstract and should be implemented by subclasses.
 
-    Example:
-        url = 'https://example.com'
-        keys = ('key1', 'key2')
-        col_names = ['column1', 'column2', 'column3']
-        query = Query(url, keys, col_names)
-        query.execute()
-        result = query.result
+    Static Methods:
+        retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any: Retrieve web data from the
+                                                                                        specified URL.
+        _get_response_content(response: Response, attribute: str) -> Any: Get the content of the HTTP response based on the specified attribute.
+        make_request(attempts: int, url: str) -> Response: Make an HTTP request to the specified URL.
+
+    Exceptions:
+        ValueError: Raised when an invalid attribute is specified.
+        HTTPError: Raised when the maximum number of attempts is reached and an HTTP error occurs during the request.
     """
-    _lock: RLock = RLock()
-
-    def __init__(self, url: str, keys: Tuple[str], col_names: List[str]) -> None:
-        with self._lock:
-            self._url: str = url
-            self._keys: Tuple[str] = keys
-            self._col_names: List[str] = col_names
-            self._result: Any = None
+    _url: str
+    _keys: Tuple[str]
+    _col_names: List[str]
+    _result: Any
+    _lock: Lock = field(default_factory=Lock)
 
     @property
     def result(self) -> Any:
         with self._lock:
             return self._result
 
-    # @result.setter
-    # def result(self, result: Any):
-    #     _result = result
-
     @property
-    def keys(self):
-        return self._keys
+    def keys(self) -> Tuple[str]:
+        with self._lock:
+            return self._keys
 
     @property
     def url(self) -> str:
-        return self._url
+        with self._lock:
+            return self._url
 
     @property
     def col_names(self) -> List[str]:
-        return self._col_names
+        with self._lock:
+            return self._col_names
 
     @abstractmethod
     def execute(self, *args, **kwargs):
         pass
 
     @staticmethod
-    def get_web_data(url: str, counter: int = 0, attr: str = "text") -> Any:
-        """
-        Retrieves web data from the given URL based on the specified attribute.
+    def retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any:
+        attribute = attribute.strip().lower()
+        if attribute not in VALID_ATTRIBUTES:
+            raise ValueError(f'Invalid attribute: {attribute}. Expected one of {VALID_ATTRIBUTES}')
 
-        :param url: The URL from which to retrieve the web data.
-        :param counter: The number of connection attempts to have been made.
-        :param attr: The attribute to retrieve from the web data. Default is "text".
-                     Valid values are "text", "content", and "json".
-        :return: The retrieved web data in text format (default), json format, or in byte format.
-        :raises ValueError: If the specified attribute is not valid (not 'text', 'content', or 'json').
-        """
-
-        result: Any = None
-        valid = ['text', 'content', 'json']
-        attr = attr.strip().lower()
-
-        if attr not in valid:
-            raise ValueError(f'get_web_data: {attr} is an unexpected attr ({valid}')
-
-        try:
-            if attr == 'json':
-                result = getattr(Query.connect_url(counter, url), attr)()
-            else:
-                result = getattr(Query.connect_url(counter, url), attr)
-
-        except TypeError:
-            pass
-        finally:
-            return result
+        response = Query._make_request(attempts, url)
+        return Query._get_response_content(response, attribute)
 
     @staticmethod
-    def connect_url(counter: int, url: str) -> Response:
-        """
+    def _get_response_content(response: Response, attribute: str) -> Any:
+        try:
+            response_func = getattr(response, attribute)
+            return response_func() if attribute == 'json' else response_func
+        except TypeError:
+            return None
 
-        Connect to the specified URL.
-
-        :param counter: The number of times the connection has been attempted.
-        :type counter: int
-
-        :param url: The URL to connect to.
-        :type url: str
-
-        :return: The HTTP response from the URL.
-        :rtype: Response
-
-        """
-
-        response: Response = Response()
-
+    @staticmethod
+    def _make_request(attempts: int, url: str) -> Response:
         try:
             response = requests.get(url)
-        except Exception as e:
-            if counter == 10:
-                raise HTTPError from e
-
-            time.sleep(300)
-            return Query.connect_url(counter + 1, url)
-
-        finally:
             response.raise_for_status()
             return response
+        except RequestException as e:
+            if attempts >= MAX_ATTEMPTS:
+                raise HTTPError from e
+            wait_time = SLEEP_INTERVAL * (2 ** attempts)  # Exponential backoff
+            time.sleep(wait_time)
+            return Query._make_request(attempts + 1, url)
 
-
-# noinspection PyUnresolvedReferences
 
 @dataclass
 class BioRvixQuery(Query):
-    """
-    This module provides a class for querying BioRvix data.
+    _page: int = 0
 
-    :class:`BioRvixQuery` inherits from :class:`Query` and provides methods for retrieving JSON data from a web service.
+    @property
+    def page_number(self) -> int:
+        return self._page
 
-    """
-
-    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0) -> None:
-        super().__init__(url, keys, col_names)
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0):
+        super().__init__(url, keys, col_names, None)
         with self._lock:
             self._page = page
 
-    @property
-    def page(self) -> int:
-        return self._page
-
-    def get_json_data(self, counter: int = 0):
-        """
-        Retrieve JSON data from a web service.
-
-        :param counter: The number of connection attempts that have been made.
-        :return: A tuple containing the updated page value and the query object with the JSON data set as the result.
-        """
-
+    def fetch_json_data(self, attempts: int = 0) -> Tuple[int, Query]:
+        json_data = self.retrieve_web_data(self.url, attempts=attempts, attribute="json")
         with self._lock:
-            self._result = self.get_web_data(self.url, counter=counter, attr="json")
-        return self.page, self
+            self._result = json_data
+        return self.page_number, self
 
-    def execute(self, counter: int = 0) -> Tuple[int, Query]:
-        """
-        Executes the given method.
-
-        :param counter: An integer representing the number of connection attempts that have been made.
-        :return: The JSON data obtained from the method.
-        """
-        return self.get_json_data(counter)
+    def execute(self, attempts: int = 0) -> Tuple[int, Query]:
+        return self.fetch_json_data(attempts)

@@ -8,10 +8,11 @@ from typing import List, Tuple
 
 import pandas as pd
 
+from modules.behavioural.database.query import Query
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
-from modules.utils.database.process_query_results import get_value, convert_date, get_json_data
+from modules.utils.database.process_query_results import get_value, convert_date
 
 
 def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
@@ -139,7 +140,7 @@ def get_journal_name(query: Query, key: str = 'published_journal') -> str:
     :return: The journal name as a string.
     """
 
-    _, result = get_json_data(0, 0, query)
+    _, result = query.execute()
     result = result.get_result()['collection'][0]
     # return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 8]
     return get_value(result, key)
@@ -172,3 +173,23 @@ def create_publication(journal: Journal, article: Article) -> Publication:
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
     return PublicationFactory().create_base_object(article.pub_doi, journal=journal, article=article)
+
+
+'''
+def get_big_data(path:str, url:str, cursor:int, json_keys:List[str], col_names:List[str], step:int, disable:bool):
+    result_list = [get_json_data(f'{url}/{cursor}')]
+    df = query_to_df(result_list, json_keys, col_names, range(cursor, cursor + step, step), disable)
+    df.to_parquet(pathlib.Path(f'{path}/{datetime.utcnow().timestamp()}.parquet'))
+    #time.sleep(0.001)  # to visualize the progress
+
+def multithread_processor(path:str, url:str, json_keys:List[str], col_names:List[str], step:int, loop_range:range, disable:bool):
+    #print(f"values: {list(loop_range)}")
+    results = []
+    args = [(path, url, cursor, json_keys, col_names, step, disable) for cursor in loop_range]
+    #print(f'args: {len(args)}\n{args}')
+    tq.thread_map(lambda p: get_big_data(*p), args, desc='get_big_data', total=len(args))
+'''
+
+
+def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[Query]:
+    return [Query(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name) for cursor in range(0, total, step)]

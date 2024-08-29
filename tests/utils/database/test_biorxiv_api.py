@@ -28,7 +28,7 @@ import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.utils.database.biorxiv_api import process_data
-from modules.utils.database.process_query_results import get_web_data, get_json_data, get_value
+from modules.utils.database.process_query_results import get_value
 
 
 @pytest.fixture()
@@ -50,7 +50,7 @@ def query():
 
 
 @pytest.fixture()
-def prepub_query(query: Query) -> Query:
+def prepub_query(query: BioRvixQuery) -> Query:
     """
     Executes a query to retrieve prepublication data from the BioRxiv API.
 
@@ -60,7 +60,7 @@ def prepub_query(query: Query) -> Query:
     # url = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
     # url = 'https://api.biorxiv.org/details/biorxiv/10.1101/339747'
     # url = 'https://api.biorxiv.org/details/medrxiv/10.1101/2021.04.29.21256344'
-    result = get_json_data(0, 0, query)
+    result = query.execute()
     return result[1]
 
 
@@ -89,7 +89,7 @@ def pub_query(pubs_query) -> Union[Query, Any]:
     # keys: Tuple = ('published_journal',)
     # col_names: List[str] = ['Journal']
     # query: Query = Query(url, keys, col_names)
-    return get_json_data(0, 0, pubs_query)[1]
+    return pubs_query.execute()[1]
 
 
 def test_get_query_result(query: Query) -> None:
@@ -132,11 +132,11 @@ def test_get_web_data(query: Query) -> None:
     """
 
     url: str = query.url
-    result = get_web_data(0, url, 'json')
+    result = Query.retrieve_web_data(url, 0, 'json')
     assert isinstance(result, dict)
-    result = get_web_data(0, url)
+    result = Query.retrieve_web_data(url, 0)
     assert isinstance(result, str)
-    result = get_web_data(0, url, 'content')
+    result = Query.retrieve_web_data(url, 0, 'content')
     assert isinstance(result, bytes)
 
 
@@ -156,11 +156,11 @@ def test_valid_attr(query):
     """
 
     try:
-        get_web_data(0, query.url, 'TEXT')
-        get_web_data(0, query.url, 'text ')
-        get_web_data(0, query.url, ' text')
-        get_web_data(0, query.url, ' text ')
-        get_web_data(0, query.url, '\n\ttext')
+        Query.retrieve_web_data(query.url, 0, 'TEXT')
+        Query.retrieve_web_data(query.url, 0, 'text ')
+        Query.retrieve_web_data(query.url, 0, ' text')
+        Query.retrieve_web_data(query.url, 0, ' text ')
+        Query.retrieve_web_data(query.url, 0, '\n\ttext')
     except ValueError as exc:
         assert False, f'get_web_data: {exc}'
 
@@ -199,7 +199,7 @@ def test_process_data_preprint(prepub_query: Query) -> None:
 
 def test_process_data_published(pub_query: Query) -> None:
     """
-    Test the process_data method for the publishedt query.
+    Test the process_data method for the published query.
 
     :param pub_query: The Query object to be processed.
     :type pub_query: Query
@@ -213,7 +213,7 @@ def test_process_data_published(pub_query: Query) -> None:
 
 def process_biorxiv_query(query: Query, attr: str) -> None:
     result: dict = query.result['collection'][0]
-    collection: List = list(result.keys)
+    collection: List = list(result.keys())
     try:
         _ = [get_value(result, key) for key in collection]
     except KeyError as exc:

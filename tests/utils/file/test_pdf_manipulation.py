@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture()
 def pdf():
-    return Path('../../data/example.pdf')
+    return Path('../../../data/example.pdf')
 
 
 def test_extract_fulltext(pdf):
