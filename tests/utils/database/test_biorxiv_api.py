@@ -27,7 +27,7 @@ from typing import Tuple, List, Union, Any
 import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
-from modules.utils.database.biorxiv_api import process_data
+from modules.utils.database.biorxiv_api import process_data, create_query_list, process_query_list
 from modules.utils.database.process_query_results import get_value
 
 
@@ -90,6 +90,18 @@ def pub_query(pubs_query) -> Union[Query, Any]:
     # col_names: List[str] = ['Journal']
     # query: Query = Query(url, keys, col_names)
     return pubs_query.execute()[1]
+
+
+def process_biorxiv_query(query: Query, attr: str) -> None:
+    result: dict = query.result['collection'][0]
+    collection: List = list(result.keys())
+    try:
+        _ = [get_value(result, key) for key in collection]
+    except KeyError as exc:
+        assert False, f'raised an exception {exc}'
+
+    tmp = process_data(query.result, 'collection', query.keys, 0)
+    assert tmp[0][1] == query.result['collection'][0].get(attr)
 
 
 def test_get_query_result(query: Query) -> None:
@@ -211,13 +223,23 @@ def test_process_data_published(pub_query: Query) -> None:
     process_biorxiv_query(pub_query, 'preprint_doi')
 
 
-def process_biorxiv_query(query: Query, attr: str) -> None:
-    result: dict = query.result['collection'][0]
-    collection: List = list(result.keys())
-    try:
-        _ = [get_value(result, key) for key in collection]
-    except KeyError as exc:
-        assert False, f'raised an exception {exc}'
+def test_process_query_list():
+    url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
+    keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
+                   'version', 'type', 'category', 'jatsxml', 'published')
+    col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
+                       "Category", "Xml", "Published"]
 
-    tmp = process_data(query.result, 'collection', query.keys, 0)
-    assert tmp[0][1] == query.result['collection'][0].get(attr)
+    query_list: List[BioRvixQuery] = create_query_list(url, keys, col_names, 100, 630)
+    assert len(query_list) == 7
+    results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
+    assert len(results) == 7
+    assert get_cursor_list(results) == [x for x in range(0, 7)]
+
+
+def get_cursor_list(results: List[Tuple[int, BioRvixQuery]]) -> List[int]:
+    return [x for x, _ in results]
+
+
+def get_result_list(results:List[Tuple[int, BioRvixQuery]]) -> List[Any]:
+    return [y.result for _, y in results]

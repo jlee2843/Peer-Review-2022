@@ -2,11 +2,12 @@
 The BioRvix_api module contains functions that interacts with the BioRvix database through its API and processes the
 information that is retrieved from the BioRvix database.
 """
-
+import pprint
 import time
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 import pandas as pd
+import tqdm.contrib.concurrent as tq
 
 from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
@@ -191,11 +192,30 @@ def multithread_processor(path:str, url:str, json_keys:List[str], col_names:List
 '''
 
 
-def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[Query]:
+def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[BioRvixQuery]:
     return [BioRvixQuery(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name, page=cursor // step) for cursor in
             range(0, total, step)]
 
 
 def process_query_list(query_list: List[Query]) -> List[Tuple[int, BioRvixQuery]]:
-    import tqdm.contrib.concurrent as tq
     return tq.thread_map(lambda p: p.execute(), query_list, desc='BioRvix.execute()', total=len(query_list))
+
+
+def get_result_list(results:List[Tuple[int, BioRvixQuery]]) -> List[Any]:
+    return [y.result for _, y in results]
+
+
+if __name__ == "__main__":
+    url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
+    keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
+                   'version', 'type', 'category', 'jatsxml', 'published')
+    col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
+                       "Category", "Xml", "Published"]
+
+    query_list: List[BioRvixQuery] = create_query_list(url, keys, col_names, 100, 630)
+    results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
+    json_list: List[Any] = get_result_list(results)
+    pprint.pp(json_list)
+    print(vars(json_list))
+
+
