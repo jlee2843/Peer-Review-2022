@@ -45,7 +45,7 @@ class Query(ABC):
     _url: str
     _keys: Tuple[str]
     _col_names: List[str]
-    _result: Any
+    _result: Any = field(default=None)
     _lock: Lock = field(default_factory=Lock)
 
     @property
