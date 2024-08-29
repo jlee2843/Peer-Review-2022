@@ -26,7 +26,3 @@ class Settings(metaclass=Singleton):
                 value = self._config_object[key]
 
         return value
-
-
-if __name__ == "__main__":
-    pass
