@@ -24,7 +24,6 @@ class Query(ABC):
         keys (property): Getter for the keys attribute.
         url (property): Getter for the url attribute.
         col_names (property): Getter for the col_names attribute.
-        cursor (property): Getter for the cursor attribute.
         execute (abstractmethod): Executes the query.
 
     Example:
@@ -35,21 +34,23 @@ class Query(ABC):
         query.execute()
         result = query.result
     """
+    _lock: RLock = RLock()
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str]) -> None:
-        self._url: str = url
-        self._keys: Tuple[str] = keys
-        self._col_names: List[str] = col_names
-        self._result: Any = None
-        self._Lock: RLock = RLock()
+        with self._lock:
+            self._url: str = url
+            self._keys: Tuple[str] = keys
+            self._col_names: List[str] = col_names
+            self._result: Any = None
 
     @property
     def result(self) -> Any:
-        return self._result
+        with self._lock:
+            return self._result
 
-    @result.setter
-    def result(self, result: Any):
-        _result = result
+    # @result.setter
+    # def result(self, result: Any):
+    #     _result = result
 
     @property
     def keys(self):
@@ -68,12 +69,12 @@ class Query(ABC):
         pass
 
     @staticmethod
-    def get_web_data(counter: int, url: str, attr: str = "text") -> Any:
+    def get_web_data(url: str, counter: int = 0, attr: str = "text") -> Any:
         """
         Retrieves web data from the given URL based on the specified attribute.
 
-        :param counter: The number of connection attempts to have been made.
         :param url: The URL from which to retrieve the web data.
+        :param counter: The number of connection attempts to have been made.
         :param attr: The attribute to retrieve from the web data. Default is "text".
                      Valid values are "text", "content", and "json".
         :return: The retrieved web data in text format (default), json format, or in byte format.
@@ -136,24 +137,15 @@ class Query(ABC):
 @dataclass
 class BioRvixQuery(Query):
     """
-    This class represents a query to fetch data from the BioRvix database.
+    This module provides a class for querying BioRvix data.
 
-    It extends the base class Query.
-
-    Attributes:
-        cursor (int): The database cursor used to execute the query.
-        url (str): The URL of the BioRvix database.
-        result (Any): The result of the query execution.
-
-    Methods:
-        execute(attr: str = 'json') -> Any:
-            Executes the query and returns the result.
+    :class:`BioRvixQuery` inherits from :class:`Query` and provides methods for retrieving JSON data from a web service.
 
     """
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0) -> None:
+        super().__init__(url, keys, col_names)
         with self._lock:
-            super().__init__(url, keys, col_names)
             self._page = page
 
     @property
@@ -165,13 +157,18 @@ class BioRvixQuery(Query):
         Retrieve JSON data from a web service.
 
         :param counter: The number of connection attempts that have been made.
-        :param page: The page the query belongs to.
         :return: A tuple containing the updated page value and the query object with the JSON data set as the result.
         """
 
         with self._lock:
-            self.result = self.get_web_data(counter, self.url, "json")
-        return page, self
+            self._result = self.get_web_data(self.url, counter=counter, attr="json")
+        return self.page, self
 
-    def execute(self, counter: int):
+    def execute(self, counter: int = 0) -> Tuple[int, Query]:
+        """
+        Executes the given method.
+
+        :param counter: An integer representing the number of connection attempts that have been made.
+        :return: The JSON data obtained from the method.
+        """
         return self.get_json_data(counter)
