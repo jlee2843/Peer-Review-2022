@@ -92,6 +92,17 @@ def pub_query(pubs_query) -> Union[Query, Any]:
     return pubs_query.execute()[1]
 
 
+@pytest.fixture()
+def full_prepub_query() -> BioRvixQuery:
+    url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
+    keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
+                   'version', 'type', 'category', 'jatsxml', 'published')
+    col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
+                       "Category", "Xml", "Published"]
+
+    return BioRvixQuery(url, keys, col_names)
+
+
 def process_biorxiv_query(query: Query, attr: str) -> None:
     result: dict = query.result['collection'][0]
     collection: List = list(result.keys())
@@ -152,7 +163,7 @@ def test_get_web_data(query: Query) -> None:
     assert isinstance(result, bytes)
 
 
-def test_valid_attr(query):
+def test_valid_attr(query: Query) -> None:
     """
     This method tests the validity of the attribute in the given query by calling the `get_web_data` function with
     different attribute values. If any of the calls raise a `ValueError`, an assertion error is raised.
@@ -177,7 +188,7 @@ def test_valid_attr(query):
         assert False, f'get_web_data: {exc}'
 
 
-def test_key_values(prepub_query, query):
+def test_key_values(prepub_query: Query, query: Query) -> None:
     keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
 
@@ -185,7 +196,7 @@ def test_key_values(prepub_query, query):
     assert keys == prepub_query.keys
 
 
-def test_key_values_published(pub_query, pubs_query):
+def test_key_values_published(pub_query: Query, pubs_query: Query) -> None:
     keys: Tuple = (
         "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
         "preprint_author_corresponding_institution", "preprint_category", "published_journal", "preprint_date",
@@ -222,22 +233,8 @@ def test_process_data_published(pub_query: Query) -> None:
     """
     process_biorxiv_query(pub_query, 'preprint_doi')
 
-@pytest.fixture()
-def full_prepub_query():
-    url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
-    keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
-                   'version', 'type', 'category', 'jatsxml', 'published')
-    col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
-                       "Category", "Xml", "Published"]
 
-    return BioRvixQuery(url, keys, col_names)
-
-
-def test_get_total_entries(full_prepub_query):
-    assert full_prepub_query.get_total_entries() == 630
-
-
-def test_process_query_list(full_prepub_query):
+def test_process_query_list(full_prepub_query: BioRvixQuery) -> None:
     from modules.utils.database.biorxiv_api import get_result_list
     query_list: List[BioRvixQuery] = create_query_list(full_prepub_query.url, full_prepub_query.keys,
                                                        full_prepub_query.col_names, 100, 630)
@@ -245,5 +242,9 @@ def test_process_query_list(full_prepub_query):
     results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
     assert len(results) == 7
     assert get_result_list(results) == [x for x in range(0, 7)]
+
+
+def test_get_total_entries(full_prepub_query: BioRvixQuery) -> None:
+    assert full_prepub_query.get_total_entries() == 630
 
 
