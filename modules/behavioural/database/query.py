@@ -44,11 +44,6 @@ class Query(ABC):
         ValueError: Raised when an invalid attribute is specified.
         HTTPError: Raised when the maximum number of attempts is reached and an HTTP error occurs during the request.
     """
-    _url: str
-    _keys: Tuple[str]
-    _col_names: List[str]
-    _result: Any = field(default=None)
-    _lock: rwlock.RWLockFair = field(default_factory=rwlock.RWLockFair)
 
     @property
     def result(self) -> Any:
@@ -70,13 +65,15 @@ class Query(ABC):
         with self._rlock:
             return self._col_names
 
-    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], *args, **kwargs):
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], result: Any = None, *args, **kwargs):
+        import re
+        self._lock = rwlock.RWLockFair()
         self._rlock = self._lock.gen_rlock()
         self._wlock = self._lock.gen_wlock()
-        with self._wlock:
-            self._url = url
-            self._keys = keys
-            self._col_names = col_names
+        self._url = url
+        self._keys = keys
+        self._col_names = col_names
+        self._result = result
 
     @abstractmethod
     def execute(self, *args, **kwargs):
@@ -128,9 +125,14 @@ class BioRvixQuery(Query):
             self._page = page
 
     def get_total_entries(self) -> int:
-        _, json_info = self.fetch_json_data()
-        json_info = json_info.result
-        return json_info["messages"][0]["total"]
+        import re
+        end_point: str = self.url
+        m = re.search(r'\d+$', end_point)
+        # if the string ends in digits m will be a Match object, or None otherwise.
+        if m is None:
+            end_point = end_point + '0'
+        json_info = self.retrieve_web_data(end_point, attribute='json')
+        return int(json_info["messages"][0]["total"])
 
     def fetch_json_data(self, attempts: int = 0) -> Tuple[int, Query]:
         json_data = self.retrieve_web_data(self.url, attempts=attempts, attribute="json")
