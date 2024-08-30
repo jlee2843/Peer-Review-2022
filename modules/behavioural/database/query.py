@@ -15,34 +15,61 @@ VALID_ATTRIBUTES: Set[str] = {'text', 'content', 'json'}
 @dataclass
 class Query(ABC):
     """
-    A base class for querying web data and making HTTP requests.
+    The `Query` class is an abstract base class that provides a common interface for querying data from a web source.
 
     Attributes:
-        _url (str): The URL of the web resource.
-        _keys (Tuple[str]): A tuple of keys used in the query.
-        _col_names (List[str]): A list of column names for the result.
+        _lock (rwlock.RWLockFair): A fair reader-writer lock used to synchronize access to the class attributes.
+        _rlock (rwlock.RLock): A reader lock acquired from `_lock` for read-only operations.
+        _wlock (rwlock.RLock): A reader lock acquired from `_lock` for write operations.
+        _url (str): The URL of the web source to query.
+        _keys (Tuple[str]): The keys to use in the query.
+        _col_names (List[str]): The names of the columns in the query result.
         _result (Any): The result of the query.
-        _lock (Lock): A lock for thread safety.
-
-    Properties:
-        result (Any): The result of the query. This property is thread-safe.
-        keys (Tuple[str]): The keys used in the query. This property is thread-safe.
-        url (str): The URL of the web resource. This property is thread-safe.
-        col_names (List[str]): The column names for the result. This property is thread-safe.
 
     Methods:
-        execute(*args, **kwargs): Execute the query. This method is abstract and should be implemented by subclasses.
+        __init__(self, url: str, keys: Tuple[str], col_names: List[str], result: Any = None, *args, **kwargs)
+            Initializes a new instance of the `Query` class.
 
-    Static Methods:
-        retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any: Retrieve web data from the
-                                                                                        specified URL.
-        _get_response_content(response: Response, attribute: str) -> Any: Get the content of the HTTP response based on
-                                                                          the specified attribute.
-        make_request(attempts: int, url: str) -> Response: Make an HTTP request to the specified URL.
+            Parameters:
+                url (str): The URL of the web source to query.
+                keys (Tuple[str]): The keys to use in the query.
+                col_names (List[str]): The names of the columns in the query result.
+                result (Any, optional): The initial result of the query. Defaults to None.
 
-    Exceptions:
-        ValueError: Raised when an invalid attribute is specified.
-        HTTPError: Raised when the maximum number of attempts is reached and an HTTP error occurs during the request.
+        execute(self, *args, **kwargs)
+            Abstract method that needs to be implemented by concrete subclasses.
+            Executes the query.
+
+        retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any
+            Static method that retrieves data from a web source.
+
+            Parameters:
+                url (str): The URL of the web source to retrieve data from.
+                attempts (int, optional): The number of attempts made to retrieve the data. Defaults to 0.
+                attribute (str, optional): The attribute of the response to retrieve. Defaults to "text".
+
+            Returns:
+                Any: The retrieved data.
+
+        _get_response_content(response: Response, attribute: str) -> Any
+            Static method that extracts the content from a response object.
+
+            Parameters:
+                response (Response): The response object.
+                attribute (str): The attribute of the response to extract the content from.
+
+            Returns:
+                Any: The extracted content.
+
+        _make_request(attempts: int, url: str) -> Response
+            Static method that makes a HTTP GET request to a URL.
+
+            Parameters:
+                attempts (int): The number of attempts made to make the request.
+                url (str): The URL to make the request to.
+
+            Returns:
+                Response: The response object.
     """
 
     @property
@@ -112,6 +139,19 @@ class Query(ABC):
 
 @dataclass
 class BioRvixQuery(Query):
+    """
+    A class representing a query for BioRvix documents.
+
+    Args:
+        url (str): The URL to query.
+        keys (Tuple[str]): The keys to use for the query.
+        col_names (List[str]): The list of column names.
+        page (int, optional): The page number to start the query from. Defaults to 0.
+
+    Attributes:
+        _page (int): The current page number.
+
+    """
     _page: int = 0
 
     @property
