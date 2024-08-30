@@ -1,10 +1,10 @@
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from threading import Lock
 from typing import Tuple, List, Any, Set
 
 import requests
+from readerwriterlock import rwlock
 from requests import HTTPError, Response, RequestException
 
 MAX_ATTEMPTS: int = 10
@@ -48,26 +48,26 @@ class Query(ABC):
     _keys: Tuple[str]
     _col_names: List[str]
     _result: Any = field(default=None)
-    _lock: Lock = field(default_factory=Lock)
+    _lock: rwlock.RWLockFair = field(default_factory=rwlock.RWLockFair)
 
     @property
     def result(self) -> Any:
-        with self._lock:
+        with self._rlock:
             return self._result
 
     @property
     def keys(self) -> Tuple[str]:
-        with self._lock:
+        with self._rlock:
             return self._keys
 
     @property
     def url(self) -> str:
-        with self._lock:
+        with self._rlock:
             return self._url
 
     @property
     def col_names(self) -> List[str]:
-        with self._lock:
+        with self._rlock:
             return self._col_names
 
     @abstractmethod
@@ -111,11 +111,14 @@ class BioRvixQuery(Query):
 
     @property
     def page_number(self) -> int:
-        return self._page
+        with self._rlock:
+            return self._page
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0):
         super().__init__(url, keys, col_names, None)
-        with self._lock:
+        self._rlock = self._lock.gen_rlock()
+        self._wlock = self._lock.gen_wlock()
+        with self._wlock:
             self._page = page
 
     def get_total_entries(self) -> int:
@@ -125,7 +128,7 @@ class BioRvixQuery(Query):
 
     def fetch_json_data(self, attempts: int = 0) -> Tuple[int, Query]:
         json_data = self.retrieve_web_data(self.url, attempts=attempts, attribute="json")
-        with self._lock:
+        with self._wlock:
             self._result = json_data
         return self.page_number, self
 
