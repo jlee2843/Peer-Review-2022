@@ -70,6 +70,14 @@ class Query(ABC):
         with self._rlock:
             return self._col_names
 
+    def __init__(self, url: str, keys: Tuple[str], col_names: List[str], *args, **kwargs):
+        self._rlock = self._lock.gen_rlock()
+        self._wlock = self._lock.gen_wlock()
+        with self._wlock:
+            self._url = url
+            self._keys = keys
+            self._col_names = col_names
+
     @abstractmethod
     def execute(self, *args, **kwargs):
         pass
@@ -116,8 +124,6 @@ class BioRvixQuery(Query):
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str], page: int = 0):
         super().__init__(url, keys, col_names, None)
-        self._rlock = self._lock.gen_rlock()
-        self._wlock = self._lock.gen_wlock()
         with self._wlock:
             self._page = page
 

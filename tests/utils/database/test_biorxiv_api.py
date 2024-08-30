@@ -241,10 +241,12 @@ def test_process_query_list(full_prepub_query: BioRvixQuery) -> None:
     assert len(query_list) == 7
     results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
     assert len(results) == 7
-    assert get_result_list(results) == [x for x in range(0, 7)]
+    assert get_cursor_list(results) == [x for x in range(0, 7)]
 
 
 def test_get_total_entries(full_prepub_query: BioRvixQuery) -> None:
     assert full_prepub_query.get_total_entries() == 630
 
 
+def get_cursor_list(results: [int, Query]) -> List[int]:
+    return [x for x, _ in results]
