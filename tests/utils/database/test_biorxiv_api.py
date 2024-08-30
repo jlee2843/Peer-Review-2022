@@ -27,8 +27,8 @@ from typing import Tuple, List, Union, Any
 import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
-from modules.utils.database.biorxiv_api import process_data, create_query_list, process_query_list
-from modules.utils.database.process_query_results import get_value
+from modules.utils.database.biorxiv_api import create_query_list, process_query_list
+from modules.utils.database.process_query_results import process_data, get_value
 
 
 @pytest.fixture()
@@ -222,24 +222,28 @@ def test_process_data_published(pub_query: Query) -> None:
     """
     process_biorxiv_query(pub_query, 'preprint_doi')
 
-
-def test_process_query_list():
+@pytest.fixture()
+def full_prepub_query():
     url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
     keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
     col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
                        "Category", "Xml", "Published"]
 
-    query_list: List[BioRvixQuery] = create_query_list(url, keys, col_names, 100, 630)
+    return BioRvixQuery(url, keys, col_names)
+
+
+def test_get_total_entries(full_prepub_query):
+    assert full_prepub_query.get_total_entries() == 630
+
+
+def test_process_query_list(full_prepub_query):
+    from modules.utils.database.biorxiv_api import get_result_list
+    query_list: List[BioRvixQuery] = create_query_list(full_prepub_query.url, full_prepub_query.keys,
+                                                       full_prepub_query.col_names, 100, 630)
     assert len(query_list) == 7
     results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
     assert len(results) == 7
-    assert get_cursor_list(results) == [x for x in range(0, 7)]
+    assert get_result_list(results) == [x for x in range(0, 7)]
 
 
-def get_cursor_list(results: List[Tuple[int, BioRvixQuery]]) -> List[int]:
-    return [x for x, _ in results]
-
-
-def get_result_list(results:List[Tuple[int, BioRvixQuery]]) -> List[Any]:
-    return [y.result for _, y in results]

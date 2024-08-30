@@ -175,11 +175,13 @@ def process_query_list(query_list: List[Query]) -> List[Tuple[int, BioRvixQuery]
     return tq.thread_map(lambda p: p.execute(), query_list, desc='BioRvix.execute()', total=len(query_list))
 
 
-def get_result_list(results:List[Tuple[int, BioRvixQuery]]) -> List[Any]:
+def get_result_list(results: List[Tuple[int, BioRvixQuery]]) -> List[Any]:
     return [y.result for _, y in results]
 
 
 if __name__ == "__main__":
+    pass
+    '''
     url: str = 'https://api.biorxiv.org/details/biorxiv/2018-08-21/2018-08-28/'
     keys: Tuple = ('doi', 'title', 'authors', 'author_corresponding', 'author_corresponding_institution', 'date',
                    'version', 'type', 'category', 'jatsxml', 'published')
@@ -191,5 +193,5 @@ if __name__ == "__main__":
     json_list: List[Any] = get_result_list(results)
     pprint.pp(json_list)
     print(vars(json_list))
-
+    '''
 

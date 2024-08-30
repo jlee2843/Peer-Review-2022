@@ -118,6 +118,11 @@ class BioRvixQuery(Query):
         with self._lock:
             self._page = page
 
+    def get_total_entries(self) -> int:
+        _, json_info = self.fetch_json_data()
+        json_info = json_info.result
+        return json_info["messages"][0]["total"]
+
     def fetch_json_data(self, attempts: int = 0) -> Tuple[int, Query]:
         json_data = self.retrieve_web_data(self.url, attempts=attempts, attribute="json")
         with self._lock:
