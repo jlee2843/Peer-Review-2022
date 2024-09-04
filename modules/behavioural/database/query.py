@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Tuple, List, Any, Set
+from dataclasses import dataclass
+from typing import Tuple, List, Any
 
 import requests
 from readerwriterlock import rwlock
@@ -9,68 +9,52 @@ from requests import HTTPError, Response, RequestException
 
 MAX_ATTEMPTS: int = 10
 SLEEP_INTERVAL: int = 300
-VALID_ATTRIBUTES: Set[str] = {'text', 'content', 'json'}
+VALID_ATTRIBUTES: Tuple[str, str, str] = ('text', 'content', 'json')
 
 
 @dataclass
 class Query(ABC):
     """
-    The `Query` class is an abstract base class that provides a common interface for querying data from a web source.
+    Dataclass representing a Query that includes properties for
+    query parameters and methods for executing and processing queries.
+    It also includes static methods for retrieving web data.
 
-    Attributes:
-        _lock (rwlock.RWLockFair): A fair reader-writer lock used to synchronize access to the class attributes.
-        _rlock (rwlock.RLock): A reader lock acquired from `_lock` for read-only operations.
-        _wlock (rwlock.RLock): A reader lock acquired from `_lock` for write operations.
-        _url (str): The URL of the web source to query.
-        _keys (Tuple[str]): The keys to use in the query.
-        _col_names (List[str]): The names of the columns in the query result.
-        _result (Any): The result of the query.
+    Attributes
+    ----------
+    MAX_ATTEMPTS : int
+        The maximum number of attempts to retrieve web data.
+    SLEEP_INTERVAL : int
+        The interval (in seconds) to wait between attempts.
+    VALID_ATTRIBUTES : Tuple[str]
+        Allowed attributes for response content.
 
-    Methods:
-        __init__(self, url: str, keys: Tuple[str], col_names: List[str], result: Any = None, *args, **kwargs)
-            Initializes a new instance of the `Query` class.
+    Properties
+    ----------
+    result : Any
+        The result of the query.
+    keys : Tuple[str]
+        The keys associated with the query.
+    url : str
+        The URL of the query.
+    col_names : List[str]
+        The column names for the query result.
 
-            Parameters:
-                url (str): The URL of the web source to query.
-                keys (Tuple[str]): The keys to use in the query.
-                col_names (List[str]): The names of the columns in the query result.
-                result (Any, optional): The initial result of the query. Defaults to None.
-
-        execute(self, *args, **kwargs)
-            Abstract method that needs to be implemented by concrete subclasses.
-            Executes the query.
-
-        retrieve_web_data(url: str, attempts: int = 0, attribute: str = "text") -> Any
-            Static method that retrieves data from a web source.
-
-            Parameters:
-                url (str): The URL of the web source to retrieve data from.
-                attempts (int, optional): The number of attempts made to retrieve the data. Defaults to 0.
-                attribute (str, optional): The attribute of the response to retrieve. Defaults to "text".
-
-            Returns:
-                Any: The retrieved data.
-
-        _get_response_content(response: Response, attribute: str) -> Any
-            Static method that extracts the content from a response object.
-
-            Parameters:
-                response (Response): The response object.
-                attribute (str): The attribute of the response to extract the content from.
-
-            Returns:
-                Any: The extracted content.
-
-        _make_request(attempts: int, url: str) -> Response
-            Static method that makes a HTTP GET request to a URL.
-
-            Parameters:
-                attempts (int): The number of attempts made to make the request.
-                url (str): The URL to make the request to.
-
-            Returns:
-                Response: The response object.
+    Methods
+    -------
+    __init__(url, keys, col_names, result, *args, **kwargs)
+        Initializes a new Query.
+    execute(*args, **kwargs)
+        Abstract method to execute the query.
+    retrieve_web_data(url, attempts, attribute)
+        Retrieves web data with the specified number of attempts and attribute.
+    _get_response_content(response, attribute)
+        Gets the content of the response based on the specified attribute.
+    _make_request(attempts, url)
+        Makes a web request with exponential backoff for retrying.
     """
+    MAX_ATTEMPTS: int = 10
+    SLEEP_INTERVAL: int = 300
+    VALID_ATTRIBUTES: Tuple[str] = ('text', 'content', 'json')
 
     @property
     def result(self) -> Any:
@@ -93,7 +77,6 @@ class Query(ABC):
             return self._col_names
 
     def __init__(self, url: str, keys: Tuple[str], col_names: List[str], result: Any = None, *args, **kwargs):
-        import re
         self._lock = rwlock.RWLockFair()
         self._rlock = self._lock.gen_rlock()
         self._wlock = self._lock.gen_wlock()
@@ -140,17 +123,27 @@ class Query(ABC):
 @dataclass
 class BioRvixQuery(Query):
     """
-    A class representing a query for BioRvix documents.
+        BioRvixQuery class is a specialized type of Query for handling specific operations for a BioRvix dataset.
 
-    Args:
-        url (str): The URL to query.
-        keys (Tuple[str]): The keys to use for the query.
-        col_names (List[str]): The list of column names.
-        page (int, optional): The page number to start the query from. Defaults to 0.
+        _page : int
+            Tracks the current page of data being accessed.
 
-    Attributes:
-        _page (int): The current page number.
+        Methods
+        -------
+        page_number() -> int
+            Returns the current page number in a thread-safe manner.
 
+        __init__(url: str, keys: Tuple[str], col_names: List[str], page: int = 0)
+            Initializes the BioRvixQuery with specified parameters and sets the page number.
+
+        get_total_entries() -> int
+            Retrieves the total number of entries available from the remote source.
+
+        fetch_json_data(attempts: int = 0) -> Tuple[int, Query]
+            Fetches JSON data from the specified URL, updates the internal result, and returns the page number along with the Query object.
+
+        execute(attempts: int = 0) -> Tuple[int, Query]
+            Wrapper around fetch_json_data to initiate the data fetching process.
     """
     _page: int = 0
 
@@ -165,13 +158,7 @@ class BioRvixQuery(Query):
             self._page = page
 
     def get_total_entries(self) -> int:
-        import re
-        end_point: str = self.url
-        m = re.search(r'\d+$', end_point)
-        # if the string ends in digits m will be a Match object, or None otherwise.
-        if m is None:
-            end_point = end_point + '0'
-        json_info = self.retrieve_web_data(end_point, attribute='json')
+        json_info = self.retrieve_web_data(self.url.rstrip('/') + '/0', attribute='json')
         return int(json_info["messages"][0]["total"])
 
     def fetch_json_data(self, attempts: int = 0) -> Tuple[int, Query]:
