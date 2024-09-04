@@ -108,16 +108,22 @@ class Query(ABC):
 
     @staticmethod
     def _make_request(attempts: int, url: str) -> Response:
+        retry_list = {requests.codes['reset'], requests.codes['partial'], requests.codes['im_used'],
+                      requests.codes['timeout'], requests.codes['too_many'], requests.codes['none'],
+                      requests.codes['bandwidth']}
         try:
             response = requests.get(url)
             response.raise_for_status()
             return response
-        except RequestException as e:
-            if attempts >= MAX_ATTEMPTS:
+        except HTTPError as e:
+            if e.response.status_code in retry_list:
+                if attempts >= MAX_ATTEMPTS:
+                    raise HTTPError from e
+                wait_time = SLEEP_INTERVAL * (2 ** attempts)  # Exponential backoff
+                time.sleep(wait_time)
+                return Query._make_request(attempts + 1, url)
+            else:
                 raise HTTPError from e
-            wait_time = SLEEP_INTERVAL * (2 ** attempts)  # Exponential backoff
-            time.sleep(wait_time)
-            return Query._make_request(attempts + 1, url)
 
 
 @dataclass
