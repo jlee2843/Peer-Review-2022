@@ -2,14 +2,10 @@
 The BioRvix_api module contains functions that interacts with the BioRvix database through its API and processes the
 information that is retrieved from the BioRvix database.
 """
-import pprint
-import time
-from typing import List, Tuple, Any
 
 import pandas as pd
-import tqdm.contrib.concurrent as tq
 
-from modules.behavioural.database.query import Query, BioRvixQuery
+from modules.behavioural.database.query import Query
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
@@ -47,63 +43,6 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
         PublishedPrepubArticleMediator().add_object(pub_doi, article)
 
     return article
-
-
-def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    The function create_prepublish_df, which transforms a Pandas DataFrame, df, to get it ready for future processing
-    related to publishing. The function takes in a DataFrame and returns a processed DataFrame.
-
-    :param df: a pandas DataFrame containing the data to be preprocessed
-    :return: a pandas DataFrame with the preprocessed data
-
-    The `create_prepublish_df` method takes a pandas DataFrame `df` as input and performs a series of preprocessing
-    steps on the data. It modifies the DataFrame by applying various transformations to different columns. The method
-    then returns the modified DataFrame with the preprocessed data.
-
-    If any errors occur during the preprocessing steps, an error message is printed along with the exception details.
-
-    Finally, the modified DataFrame is returned.
-
-    Example usage:
-
-    ```python
-    import pandas as pd
-
-    # Assuming 'df' is a pandas DataFrame containing the data to be processed
-
-    preprocessed_df = create_prepublish_df(df)
-
-    ```
-    """
-    try:
-        # adds a new column to the DataFrame, Num_of_Authors, by counting the number of authors.
-        # It assumes that author names in the Authors column are separated by semicolon (;)
-        df['Num_of_Authors'] = df.Authors.apply(lambda x: len(x.split(';')))
-        # converts the DOI column to string. DOI stands for Digital Object Identifier, a unique alphanumeric string
-        # assigned to digital content.
-        df.DOI = df.DOI.astype('str')
-        #  remove leading and trailing whitespaces in the Title, Authors, Corresponding_Authors and Institution
-        #  columns and ensure they are string type.
-        df.Title = df.Title.astype('str').map(lambda x: x.strip())
-        df.Authors = df.Authors.astype('str').map(lambda x: x.strip())
-        df.Corresponding_Authors = df.Corresponding_Authors.astype('str').map(lambda x: x.strip())
-        df.Institution = df.Institution.map(lambda x: x.strip().upper()).astype('category')
-        # applies the convert_date function to every entry in the Date column and then converts it to
-        # pandas datetime64[ns] format.
-        df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64[ns]')
-        df.Version = df.Version.astype('int32')
-        df.Type = df.Type.map(lambda x: x.strip().lower()).astype('category')
-        df.Category = df.Category.map(lambda x: x.strip().title()).astype('category')
-        df.Xml = df.Xml.astype('str')
-        df.Published = df.Published.astype('str')
-    # any error occurs during these transformations, an exception will be caught.
-    except Exception as e:
-        print(f'Error in data format:{e.args}\n')
-        # the error and traceback will be printed out.
-        print(e.with_traceback)
-
-    return df
 
 
 def get_journal_name(query: Query, key: str = 'published_journal') -> str:
@@ -166,17 +105,61 @@ def multithread_processor(path:str, url:str, json_keys:List[str], col_names:List
 '''
 
 
-def create_query_list(url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[BioRvixQuery]:
-    return [BioRvixQuery(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name, page=cursor // step) for cursor in
-            range(0, total, step)]
+def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    The function create_prepublish_df, which transforms a Pandas DataFrame, df, to get it ready for future processing
+    related to publishing. The function takes in a DataFrame and returns a processed DataFrame.
 
+    :param df: a pandas DataFrame containing the data to be preprocessed
+    :return: a pandas DataFrame with the preprocessed data
 
-def process_query_list(query_list: List[Query]) -> List[Tuple[int, BioRvixQuery]]:
-    return tq.thread_map(lambda p: p.execute(), query_list, desc='BioRvix.execute()', total=len(query_list))
+    The `create_prepublish_df` method takes a pandas DataFrame `df` as input and performs a series of preprocessing
+    steps on the data. It modifies the DataFrame by applying various transformations to different columns. The method
+    then returns the modified DataFrame with the preprocessed data.
 
+    If any errors occur during the preprocessing steps, an error message is printed along with the exception details.
 
-def get_result_list(results: List[Tuple[int, BioRvixQuery]]) -> List[Any]:
-    return [y.result for _, y in results]
+    Finally, the modified DataFrame is returned.
+
+    Example usage:
+
+    ```python
+    import pandas as pd
+
+    # Assuming 'df' is a pandas DataFrame containing the data to be processed
+
+    preprocessed_df = create_prepublish_df(df)
+
+    ```
+    """
+    try:
+        # adds a new column to the DataFrame, Num_of_Authors, by counting the number of authors.
+        # It assumes that author names in the Authors column are separated by semicolon (;)
+        df['Num_of_Authors'] = df.Authors.apply(lambda x: len(x.split(';')))
+        # converts the DOI column to string. DOI stands for Digital Object Identifier, a unique alphanumeric string
+        # assigned to digital content.
+        df.DOI = df.DOI.astype('str')
+        #  remove leading and trailing whitespaces in the Title, Authors, Corresponding_Authors and Institution
+        #  columns and ensure they are string type.
+        df.Title = df.Title.astype('str').map(lambda x: x.strip())
+        df.Authors = df.Authors.astype('str').map(lambda x: x.strip())
+        df.Corresponding_Authors = df.Corresponding_Authors.astype('str').map(lambda x: x.strip())
+        df.Institution = df.Institution.map(lambda x: x.strip().upper()).astype('category')
+        # applies the convert_date function to every entry in the Date column and then converts it to
+        # pandas datetime64[ns] format.
+        df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64[ns]')
+        df.Version = df.Version.astype('int32')
+        df.Type = df.Type.map(lambda x: x.strip().lower()).astype('category')
+        df.Category = df.Category.map(lambda x: x.strip().title()).astype('category')
+        df.Xml = df.Xml.astype('str')
+        df.Published = df.Published.astype('str')
+    # any error occurs during these transformations, an exception will be caught.
+    except Exception as e:
+        print(f'Error in data format:{e.args}\n')
+        # the error and traceback will be printed out.
+        print(e.with_traceback)
+
+    return df
 
 
 if __name__ == "__main__":
