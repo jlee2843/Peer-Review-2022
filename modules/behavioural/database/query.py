@@ -2,6 +2,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Tuple, List, Any
+from urllib.parse import urlparse
 
 import requests
 from readerwriterlock import rwlock
@@ -80,7 +81,7 @@ class Query(ABC):
         self._lock = rwlock.RWLockFair()
         self._rlock = self._lock.gen_rlock()
         self._wlock = self._lock.gen_wlock()
-        self._url = url
+        self._url = url if Query.uri_validator(url) else ''
         self._keys = keys
         self._col_names = col_names
         self._result = result
@@ -125,6 +126,13 @@ class Query(ABC):
             else:
                 raise HTTPError from e
 
+    @staticmethod
+    def uri_validator(x: str) -> bool:
+        try:
+            result = urlparse(x)
+            return all([result.scheme, result.netloc])
+        except AttributeError:
+            return False
 
 @dataclass
 class BioRvixQuery(Query):
