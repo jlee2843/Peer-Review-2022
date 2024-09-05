@@ -76,9 +76,9 @@ def freq_count(x: pd.DataFrame, y: str) -> Series:
     :return: the frequency count of the given series.
 
     Example:
-        >>> import pandas as pd
+        >>> import pandas as pd1
         >>> data = {'col1': [1, 2, 3, 2, 1, 3, 1]}
-        >>> df = pd.DataFrame(data)
+        >>> df = pd1.DataFrame(data)
         >>> freq_count(df['col1'], 'col1')
         1    3
         2    2

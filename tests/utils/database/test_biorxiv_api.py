@@ -27,7 +27,7 @@ from typing import Tuple, List, Union, Any
 import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
-from modules.utils.database.biorxiv_api import create_query_list, process_query_list
+from modules.creational.database.QueryFactory import BioRvixQueryFactory
 from modules.utils.database.process_query_results import process_data, get_value
 
 
@@ -235,11 +235,11 @@ def test_process_data_published(pub_query: Query) -> None:
 
 
 def test_process_query_list(full_prepub_query: BioRvixQuery) -> None:
-    from modules.utils.database.biorxiv_api import get_result_list
-    query_list: List[BioRvixQuery] = create_query_list(full_prepub_query.url, full_prepub_query.keys,
+    query_list: List[BioRvixQuery] = BioRvixQueryFactory().create_query_list(full_prepub_query.url,
+                                                                             full_prepub_query.keys,
                                                        full_prepub_query.col_names, 100, 630)
     assert len(query_list) == 7
-    results: List[Tuple[int, BioRvixQuery]] = process_query_list(query_list)
+    results: List[Tuple[int, BioRvixQuery]] = BioRvixQueryFactory().process_query_list(query_list)
     assert len(results) == 7
     assert get_cursor_list(results) == [x for x in range(0, 7)]
 

@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Tuple, List, Any
 
 import tqdm.contrib.concurrent as tq
@@ -7,7 +7,7 @@ from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.building_block import Singleton
 
 
-class QueryFactory(ABC):
+class QueryFactory(metaclass=Singleton):
     """
         An abstract base class for creating and processing queries.
 
@@ -53,7 +53,7 @@ class QueryFactory(ABC):
         pass
 
 
-class BioRvixQueryFactory(QueryFactory, metaclass=Singleton):
+class BioRvixQueryFactory(QueryFactory):
     """
         class BioRvixQueryFactory(QueryFactory, metaclass=Singleton):
 
