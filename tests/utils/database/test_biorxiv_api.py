@@ -237,7 +237,8 @@ def test_process_data_published(pub_query: Query) -> None:
 def test_process_query_list(full_prepub_query: BioRvixQuery) -> None:
     query_list: List[BioRvixQuery] = BioRvixQueryFactory().create_query_list(full_prepub_query.url,
                                                                              full_prepub_query.keys,
-                                                       full_prepub_query.col_names, 100, 630)
+                                                                             full_prepub_query.col_names,
+                                                                             100, 630)
     assert len(query_list) == 7
     results: List[Tuple[int, BioRvixQuery]] = BioRvixQueryFactory().process_query_list(query_list)
     assert len(results) == 7
