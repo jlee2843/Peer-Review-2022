@@ -87,7 +87,7 @@ class Query(ABC):
         self._result = result
 
     @abstractmethod
-    def execute(self, *args, **kwargs):
+    def execute(self, *args, **kwargs) -> Any:
         pass
 
     @staticmethod
@@ -113,7 +113,7 @@ class Query(ABC):
                       requests.codes['timeout'], requests.codes['too_many'], requests.codes['none'],
                       requests.codes['bandwidth']}
         try:
-            response = requests.get(url)
+            response: Response = requests.get(url)
             response.raise_for_status()
             return response
         except HTTPError as e:
@@ -133,6 +133,7 @@ class Query(ABC):
             return all([result.scheme, result.netloc])
         except AttributeError:
             return False
+
 
 @dataclass
 class BioRvixQuery(Query):
@@ -154,7 +155,8 @@ class BioRvixQuery(Query):
             Retrieves the total number of entries available from the remote source.
 
         fetch_json_data(attempts: int = 0) -> Tuple[int, Query]
-            Fetches JSON data from the specified URL, updates the internal result, and returns the page number along with the Query object.
+            Fetches JSON data from the specified URL, updates the internal result, and returns the page number along
+            with the Query object.
 
         execute(attempts: int = 0) -> Tuple[int, Query]
             Wrapper around fetch_json_data to initiate the data fetching process.
