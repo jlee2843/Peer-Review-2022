@@ -6,15 +6,16 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.creational.factory_design_pattern import *
-from modules.utils.database.biorxiv_api import process_data, create_article, create_prepublish_df, create_journal, \
+from modules.utils.database.biorxiv_api import create_article, create_prepublish_df, create_journal, \
     get_journal_name, create_publication
-from modules.utils.database.process_query_results import create_df, Query, get_json_data
+from modules.utils.database.process_query_results import create_df, process_data
 
 
 @pytest.fixture()
-def query():
+def query() -> BioRvixQuery:
     """
     Returns an instance of the Query class initialized with a specific URL, keys, and column names.
 
@@ -26,13 +27,13 @@ def query():
                    'version', 'type', 'category', 'jatsxml', 'published')
     col_names: List = ["DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date", "Version", "Type",
                        "Category", "Xml", "Published"]
-    query = Query(url, keys, col_names)
+    query = BioRvixQuery(url, keys, col_names)
 
     return query
 
 
 @pytest.fixture()
-def prepub_query(query: Query) -> Query:
+def prepub_query(query: BioRvixQuery) -> BioRvixQuery:
     """
     Executes a query to retrieve prepublication data from the BioRxiv API.
 
@@ -42,12 +43,11 @@ def prepub_query(query: Query) -> Query:
     # url = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
     # url = 'https://api.biorxiv.org/details/biorxiv/10.1101/339747'
     # url = 'https://api.biorxiv.org/details/medrxiv/10.1101/2021.04.29.21256344'
-    result = get_json_data(0, 0, query)
-    return result[1]
+    return query.fetch_json_data(attempts=0)[1]
 
 
 @pytest.fixture()
-def pubs_query() -> Query:
+def pubs_query() -> BioRvixQuery:
     url: str = 'https://api.biorxiv.org/pubs/medrxiv/10.1101/2021.04.29.21256344'
     keys: Tuple = (
         "preprint_doi", "published_doi", "preprint_title", "preprint_authors", "preprint_author_corresponding",
@@ -56,11 +56,11 @@ def pubs_query() -> Query:
     col_names: List = ["DOI", "pub_DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Category",
                        "Journal", "Preprint_Date", "Published_Date"]
 
-    return Query(url, keys, col_names)
+    return BioRvixQuery(url, keys, col_names)
 
 
 @pytest.fixture()
-def pub_query(pubs_query) -> Union[Query, Any]:
+def pub_query(pubs_query: BioRvixQuery) -> Union[BioRvixQuery, Any]:
     """
     Retrieve publication data from the BioRxiv API.
 
@@ -71,7 +71,8 @@ def pub_query(pubs_query) -> Union[Query, Any]:
     # keys: Tuple = ('published_journal',)
     # col_names: List[str] = ['Journal']
     # query: Query = Query(url, keys, col_names)
-    return get_json_data(0, 0, pubs_query)[1]
+
+    return pubs_query.fetch_json_data(attempts=0)[1]
 
 
 @pytest.fixture

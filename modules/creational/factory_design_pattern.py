@@ -3,12 +3,13 @@ from threading import RLock
 from types import ModuleType
 from typing import Dict, Set
 
+from readerwriterlock import rwlock
 from sortedcontainers import SortedList
 
 from modules.building_block import *
 
 
-class Factory(metaclass=Singleton):
+class Factory(ABC):
     """
 
     Factory class for creating and managing objects.
@@ -64,7 +65,18 @@ class Factory(metaclass=Singleton):
                 - Any: The object associated with the identifier, or the default value if not found.
     """
     _factory_map: Dict[str, Any] = {}
-    _lock: RLock = RLock()
+    _instance = None
+
+    def __init__(self, *args, **kwargs):
+        if self._lock is None:
+            self._lock = rwlock.RWLockFair()
+            self._rlock = self._lock.gen_rlock()
+            self._wlock = self._lock.gen_wlock()
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__init__(*args, **kwargs)
 
     @staticmethod
     def import_class(path: str) -> Any:
