@@ -1,13 +1,12 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Tuple, List, Any
 
 import tqdm.contrib.concurrent as tq
 
 from modules.behavioural.database.query import Query, BioRvixQuery
-from modules.building_block import Singleton
 
 
-class QueryFactory(metaclass=Singleton):
+class QueryFactory(ABC):
     """
         An abstract base class for creating and processing queries.
 
@@ -34,14 +33,15 @@ class QueryFactory(metaclass=Singleton):
         get_result_list(results: List[Tuple[int, Query]]) -> List[Any]
             Extracts the results from the processed queries.
             Parameters:
-                results (List[Tuple[int, Query]]): A list of tuples where each tuple contains a status code and a Query object.
+                results (List[Tuple[int, Query]]): A list of tuples where each tuple contains a status code and a Query
+                object.
             Returns:
                 List[Any]: A list of results extracted from the processed queries.
     """
 
     @abstractmethod
     def create_query_list(self, url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[
-        Query]:
+                          Query]:
         pass
 
     @abstractmethod
@@ -57,7 +57,8 @@ class BioRvixQueryFactory(QueryFactory):
     """
         class BioRvixQueryFactory(QueryFactory, metaclass=Singleton):
 
-        Creates a list of `BioRvixQuery` objects based on the specified URL, keys, column names, step size, and total number of items.
+        Creates a list of `BioRvixQuery` objects based on the specified URL, keys, column names, step size, and total
+        number of items.
 
         :param: url: The base URL for generating query URLs.
         :param: json_keys: A tuple of string keys to extract data from the JSON response.
@@ -80,7 +81,7 @@ class BioRvixQueryFactory(QueryFactory):
     """
 
     def create_query_list(self, url: str, json_keys: Tuple[str], col_name: List[str], step: int, total: int) -> List[
-        BioRvixQuery]:
+                          BioRvixQuery]:
         return [BioRvixQuery(url=f'{url}/{cursor}', keys=json_keys, col_names=col_name, page=cursor // step) for cursor
                 in range(0, total, step)]
 
