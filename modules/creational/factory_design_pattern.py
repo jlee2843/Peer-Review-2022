@@ -1,5 +1,4 @@
 from importlib import import_module
-from threading import RLock
 from types import ModuleType
 from typing import Dict, Set
 
@@ -66,17 +65,19 @@ class Factory(ABC):
     """
     _factory_map: Dict[str, Any] = {}
     _instance = None
+    _lock = None
 
     def __init__(self, *args, **kwargs):
-        if self._lock is None:
-            self._lock = rwlock.RWLockFair()
-            self._rlock = self._lock.gen_rlock()
-            self._wlock = self._lock.gen_wlock()
+        self._lock = rwlock.RWLockFair()
+        self._rlock = self._lock.gen_rlock()
+        self._wlock = self._lock.gen_wlock()
 
+    @classmethod
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.__init__(*args, **kwargs)
+        return cls._instance
 
     @staticmethod
     def import_class(path: str) -> Any:
@@ -136,12 +137,11 @@ class Factory(ABC):
         word arguments to be passed to the class constructor.
         :return: The created base object.
         """
-        with self._lock:
-            factory_object = self.get_base_object(identifier)
-            if factory_object is None:
-                factory_object = Factory.import_class(class_path)(*args, **kwargs)
-                self._factory_map[identifier] = factory_object
-            return factory_object
+        factory_object = self.get_base_object(identifier)
+        if factory_object is None:
+            factory_object = Factory.import_class(class_path)(*args, **kwargs)
+            self.update_factory_map(identifier, factory_object)
+        return factory_object
 
     def get_base_object(self, identifier: str, default=None) -> Any:
         """
@@ -151,9 +151,12 @@ class Factory(ABC):
         :param default: The default value to return if the identifier is not found.
         :return: The base object associated with the identifier, or the default value if not found.
         """
-        with self._lock:
+        with self._rlock:
             return self._factory_map.get(identifier, default)
 
+    def update_factory_map(self, identifier: str, factory_object: Any):
+        with self._wlock:
+            self._factory_map[identifier] = factory_object
 
 class DepartmentFactory(Factory):
     """
@@ -332,14 +335,12 @@ class ArticleFactory(Factory):
         calling object. Finally, the new object is returned.
         """
 
-        with (self._lock):
-            kwargs.update(doi=identifier)
-            class_ = Factory.import_class('modules.building_block.Article')
-            new_object = class_(*args, **kwargs)
-            articles: SortedList = super().get_base_object(identifier, SortedList(key=lambda x: x.version))
-            articles.add(new_object)
-            self._factory_map[identifier] = articles
-
+        kwargs.update(doi=identifier)
+        class_ = Factory.import_class('modules.building_block.Article')
+        new_object = class_(*args, **kwargs)
+        articles: SortedList = super().get_base_object(identifier, SortedList(key=lambda x: x.version))
+        articles.add(new_object)
+        self.update_factory_map(identifier, articles)
         return new_object
 
     def get_base_object(self, identifier: str, **kwargs) -> Optional[Article]:
@@ -357,12 +358,12 @@ class ArticleFactory(Factory):
         :type article: Article
         :return: None
         """
-        with self._lock:
-            pub_doi = article.pub_doi
-            self._pub_list.add(pub_doi)
+        with self._wlock:
+            self._pub_list.add(article.pub_doi)
 
     def get_publication_list(self) -> List[str]:
-        return list(self._pub_list)
+        with self._rlock:
+            return list(self._pub_list)
 
 
 class JournalFactory(Factory):
