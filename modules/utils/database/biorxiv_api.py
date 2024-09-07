@@ -55,7 +55,7 @@ def get_journal_name(query: Query, key: str = 'published_journal') -> str:
     """
 
     _, result = query.execute()
-    result = result.get_result()['collection'][0]
+    result = result.result['collection'][0]
     # return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 8]
     return get_value(result, key)
 

@@ -1,4 +1,5 @@
 import json
+import pprint
 from pathlib import Path
 from typing import Union, Tuple
 
@@ -127,6 +128,15 @@ def test_instantiation_factory():
         Category()
 
 
+def test_singleton_design_pattern():
+    assert ArticleFactory() is ArticleFactory()
+    assert JournalFactory() is JournalFactory()
+    assert PublicationFactory() is PublicationFactory()
+    assert DepartmentFactory() is DepartmentFactory()
+    assert InstitutionFactory() is InstitutionFactory()
+    assert CategoryFactory() is CategoryFactory()
+    pprint.pp(ArticleFactory())
+
 def test_create_article(prepub_query):
     """
     :param prepub_test_file: The file containing the prepublication test data in the form of a numpy array.
@@ -141,14 +151,14 @@ def test_create_article(prepub_query):
     `create_article` function.
 
     After creating the article, it verifies that the `DOI` generated matches the expected value
-    ''10.1101/001768' using an assertion. It also checks if the article object is successfully created by
+    '10.1101/001768' using an assertion. It also checks if the article object is successfully created by
     calling `ArticleFactory().get_base_object` with `identifier` parameter as `doi` and asserts that it is not `None`.
 
     Note: In order to use this method, make sure to import `np` from `numpy` and `pd` from `pandas` libraries.
     """
 
-    result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
-    df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
+    result = np.array(process_data(prepub_query.result, 'collection', prepub_query.keys, 0))
+    df = create_prepublish_df(create_df(result, prepub_query.col_names))
     for row in range(len(df)):
         row = str(row)
         doi = df.loc[row, 'DOI']
@@ -198,8 +208,8 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     result = test_create_publication(prepub_query, pubs_query)
     """
 
-    result = np.array(process_data(prepub_query.get_result(), 'collection', prepub_query.get_keys(), 0))
-    df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
+    result = np.array(process_data(prepub_query.result, 'collection', prepub_query.keys, 0))
+    df = create_prepublish_df(create_df(result, prepub_query.col_names))
     article = create_article(doi=df.loc['0', 'DOI'],
                              title=df.loc['0', 'Title'],
                              authors=df.loc['0', 'Authors'],
@@ -217,7 +227,6 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     publication = create_publication(journal, article)
     assert publication is PublicationFactory().get_base_object(article.pub_doi)
 
-
 def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Query) -> None:
     """
     Test method to receive the initial version of articles.
@@ -227,16 +236,18 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
     :return: None
     """
 
-    df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.get_col_names()))
+    df: pd.DataFrame = create_prepublish_df(create_df(prepub_test_file, prepub_query.col_names))
     load_articles(df)
-    missing_items: SortedList[str] = PublishedPrepubArticleMediator.get_missing_initial_prepub_articles_list()
+    missing_items: SortedList[str] = PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
     url = 'https://api.biorxiv.org/details/biorxiv/'
     articles: List[Article] = []
     for missing in missing_items:
-        query = Query(url + missing, prepub_query.get_keys(), prepub_query.get_col_names())
-        result = get_json_data(0, 0, query)[1]
-        result = np.array(process_data(result.get_result(), 'collection', prepub_query.get_keys(), 0))
-        df = create_prepublish_df(create_df(result, prepub_query.get_col_names()))
+        doi = PublishedPrepubArticleMediator().convert_pub_doi_to_doi(missing)
+        query = BioRvixQuery(url + doi, prepub_query.keys, prepub_query.col_names)
+        result: BioRvixQuery = query.execute(0)[1]
+        data: dict = result.result
+        tmp: np.array = np.array(process_data(data, 'collection', prepub_query.keys, 0))
+        df = create_prepublish_df(create_df(tmp, prepub_query.col_names))
         for line in range(len(df)):
             line = str(line)
             articles.append(create_article(doi=df.loc[line, 'DOI'], title=df.loc[line, 'Title'],
@@ -247,8 +258,8 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
                                            category=df.loc[line, 'Category'], xml=df.loc[line, 'Xml'],
                                            pub_doi=df.loc[line, 'Published']))
 
-        doi: str = articles[0].pub_doi
-        article = PublishedPrepubArticleMediator().get_object(doi)
+        pub_doi: str = articles[0].pub_doi
+        article = PublishedPrepubArticleMediator().get_object(pub_doi)[1]
         assert article.version == 1
 
 

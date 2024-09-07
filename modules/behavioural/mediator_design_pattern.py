@@ -108,7 +108,6 @@ class ArticleLinkTypeMediator(Mediator):
     def get_object(self, link_type: str) -> Optional[SortedList[Article]]:
         return super().get_object(link_type)
 
-
 class PublishedPrepubArticleMediator(Mediator):
     def __init__(self):
         super().__init__()
@@ -139,7 +138,6 @@ class PublishedPrepubArticleMediator(Mediator):
     def get_missing_initial_prepub_articles_list(self) -> SortedList[str]:
         return self._get_retrieve_initial_prepub_articles()
 
-    # TODO: need to rethink structure maybe: {pub_doi, {article.version, article}}
     def add_object(self, pub_doi: str, article: Article, **kwargs) -> None:
         article_version_map: Optional[SortedDict[int, Article]] = self.get_object(pub_doi) or SortedDict()
         tmp: Optional[Article] = self.get_article_version(pub_doi, article.version)
@@ -164,3 +162,6 @@ class PublishedPrepubArticleMediator(Mediator):
         if tmp is not None:
             tmp1: SortedList = SortedList(tmp.keys())
             return self.get_article_version(pub_doi, tmp1[0])
+
+    def convert_pub_doi_to_doi(self, pub_doi: str) -> str:
+        return self.get_first_stored_article_version(pub_doi).doi
