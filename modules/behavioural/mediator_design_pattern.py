@@ -1,24 +1,35 @@
 import logging
-from abc import abstractmethod
-from threading import Lock
+from abc import abstractmethod, ABC
 from typing import Dict, Tuple, Union, Any, Optional, List
 
 import pyspark
 from pyspark.sql import SparkSession
+from readerwriterlock import rwlock
 from sortedcontainers import SortedList, SortedDict
 
-from modules.building_block import Singleton, MediatorKey, Institution, Publication, Department, Category, Article, \
+from modules.building_block import MediatorKey, Institution, Publication, Department, Category, Article, \
     InteractionType
 
 logger = logging.getLogger(__name__)
 
 
 # TODO: need to initiate logger properly
-class Mediator(metaclass=Singleton):
+class Mediator(ABC):
+    _instance = None
+    _lock = None
 
-    def __init__(self):
+    @classmethod
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__init__(**kwargs)
+        return cls._instance
+
+    def __init__(self, **kwargs):
         self._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
-        self._lock: Lock = Lock()
+        self._lock = rwlock.RWLockFair()
+        self._rlock = self._lock.gen_rlock()
+        self._wlock = self._lock.gen_wlock()
 
     @abstractmethod
     def add_object(self, mediator_key: Union[MediatorKey, str], item: Union[SortedList[Any], SortedDict[int, Article]]) \
@@ -32,7 +43,7 @@ class Mediator(metaclass=Singleton):
         pyspark.sql.DataFrame, pyspark.sql.DataFrame]:
         nodes: List[Tuple] = []
         edges: List[Tuple] = []
-        with self._lock:
+        with self._rlock:
             for key in self._mediator_map.keys():
                 try:
                     method_attr = getattr(key, method_name[0], None)
@@ -57,11 +68,12 @@ class Mediator(metaclass=Singleton):
     def _mediator_map_interaction(self, interaction: InteractionType, key: Union[MediatorKey, str],
                                   value: Optional[Union[SortedList[Any], SortedDict[int, Article]]] = None) -> \
             Optional[Union[SortedList[Any], SortedDict[int, Article]]]:
-        with self._lock:
-            match interaction:
-                case InteractionType.ADD:
+        match interaction:
+            case InteractionType.ADD:
+                with self._wlock:
                     self._mediator_map[key] = value
-                case InteractionType.GET:
+            case InteractionType.GET:
+                with self._rlock:
                     return self._mediator_map.get(key)
 
 
@@ -123,17 +135,18 @@ class PublishedPrepubArticleMediator(Mediator):
         return self._prepub_article_list_interaction(InteractionType.GET)
 
     def _prepub_article_list_interaction(self, interaction: InteractionType, doi=None) -> SortedList[str]:
-        with self._lock:
-            match interaction:
-                case InteractionType.ADD:
+        match interaction:
+            case InteractionType.ADD:
+                with self._wlock:
                     if doi not in self._retrieve_initial_prepub_articles:
                         self._retrieve_initial_prepub_articles.add(doi)
-                case InteractionType.REMOVE:
+            case InteractionType.REMOVE:
+                with self._wlock:
                     self._retrieve_initial_prepub_articles.discard(doi)
-                case InteractionType.GET:
-                    pass
+            case InteractionType.GET:
+                pass
 
-            return self._retrieve_initial_prepub_articles
+        return self._retrieve_initial_prepub_articles
 
     def get_missing_initial_prepub_articles_list(self) -> SortedList[str]:
         return self._get_retrieve_initial_prepub_articles()
