@@ -67,10 +67,12 @@ class Factory(ABC):
     _instance = None
     _lock = None
 
+    #TODO: need to fixed initiation
     def __init__(self, *args, **kwargs):
-        self._lock = rwlock.RWLockFair()
-        self._rlock = self._lock.gen_rlock()
-        self._wlock = self._lock.gen_wlock()
+        if self._lock is None:
+            self._lock = rwlock.RWLockFair()
+            self._rlock = self._lock.gen_rlock()
+            self._wlock = self._lock.gen_wlock()
 
     @classmethod
     def __new__(cls, *args, **kwargs):
