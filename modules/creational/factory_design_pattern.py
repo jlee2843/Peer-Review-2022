@@ -103,9 +103,9 @@ class Factory(ABC):
         class_: Any
 
         try:
-            mod: ModuleType = Factory._import_module(module_path)
+            module: ModuleType = Factory._import_module(module_path)
             try:
-                class_ = getattr(mod, class_name)
+                class_ = getattr(module, class_name)
             except AttributeError:
                 raise RuntimeError(f'Class does not exist: {class_name}')
         except ImportError:
@@ -173,7 +173,7 @@ class DepartmentFactory(Factory):
 
     """
 
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Department:
+    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Department:
         """
             Create a base object.
 
@@ -182,7 +182,7 @@ class DepartmentFactory(Factory):
             :param kwargs: Optional keyword arguments to be passed onto the base object creation.
             :return: An instance of the Department class.
         """
-        return super().create_base_object(identifier, "modules.building_block.Department", *args, **kwargs)
+        return super().create_base_object(identifier, classpath=classpath, *args, **kwargs)
 
 
 class InstitutionFactory(Factory):

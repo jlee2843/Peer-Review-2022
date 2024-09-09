@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 import requests
 from readerwriterlock import rwlock
-from requests import HTTPError, Response, RequestException
+from requests import HTTPError, Response
 
 MAX_ATTEMPTS: int = 10
 SLEEP_INTERVAL: int = 300
@@ -177,7 +177,7 @@ class BioRvixQuery(Query):
         json_info = self.retrieve_web_data(self.url.rstrip('/') + '/0', attribute='json')
         return int(json_info["messages"][0]["total"])
 
-    def fetch_json_data(self, attempts: int = 0):
+    def fetch_json_data(self, attempts: int = 0) -> Tuple[int, 'BioRvixQuery']:
         json_data = self.retrieve_web_data(self.url, attempts=attempts, attribute="json")
         with self._wlock:
             self._result = json_data

@@ -1,16 +1,26 @@
+import pprint
+from typing import Optional
+
 import pytest
 
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Article
 from modules.creational.factory_design_pattern import ArticleFactory
+from modules.utils.database.process_query_results import process_data
 from tests.creational.test_factory_design_pattern import load_article_factory_dataframe
 
 
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
     test_doi = '10.7554/eLife.72498'
-    article: Article = PublishedPrepubArticleMediator().get_first_stored_article_version(test_doi)
-    expected: Article = ArticleFactory().get_base_object(article.doi)
+    pprint.pp(prepub_test_file)
+    pprint.pp(PublishedPrepubArticleMediator()._retrieve_initial_prepub_articles)
+    article: Optional[Article] = PublishedPrepubArticleMediator().get_first_stored_article_version(test_doi)
+    assert PublishedPrepubArticleMediator() == PublishedPrepubArticleMediator()
+    assert PublishedPrepubArticleMediator is not None
+    assert article is not None
+    expected: Optional[Article] = ArticleFactory().get_base_object(article.doi)
+    assert article.doi == expected.doi
     assert article.version == expected.version
 
 
@@ -47,7 +57,6 @@ def prepub_test_file():
 
     json_data = json.load(Path(filename).open())
     import numpy as np
-    from modules.utils.database.biorxiv_api import process_data
     result = np.array(process_data(json_data, 'collection', keys, 0))
 
     return result
@@ -67,7 +76,6 @@ def completed_test_file():
 
     json_data = json.load(Path(filename).open())
     import numpy as np
-    from modules.utils.database.biorxiv_api import process_data
     result = np.array(process_data(json_data, 'collection', keys, 0))
 
     return result

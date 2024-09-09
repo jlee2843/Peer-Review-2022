@@ -1,5 +1,4 @@
 import json
-import pprint
 from pathlib import Path
 from typing import Union, Tuple
 
@@ -135,7 +134,6 @@ def test_singleton_design_pattern():
     assert DepartmentFactory() is DepartmentFactory()
     assert InstitutionFactory() is InstitutionFactory()
     assert CategoryFactory() is CategoryFactory()
-    pprint.pp(ArticleFactory())
 
 def test_create_article(prepub_query):
     """
