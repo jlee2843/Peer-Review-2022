@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod, ABC
+from dataclasses import dataclass
 from typing import Dict, Tuple, Union, Any, Optional, List
 
 import pyspark
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: need to initiate logger properly
+
+@dataclass
 class Mediator(ABC):
     _instance = None
     _lock = None
@@ -23,13 +26,16 @@ class Mediator(ABC):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.__init__(**kwargs)
+            cls._lock = rwlock.RWLockFair()
+            cls._rlock = cls._lock.gen_rlock()
+            cls._wlock = cls._lock.gen_wlock()
+            cls._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         return cls._instance
 
-    def __init__(self, **kwargs):
-        self._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
-        self._lock = rwlock.RWLockFair()
-        self._rlock = self._lock.gen_rlock()
-        self._wlock = self._lock.gen_wlock()
+    @property
+    def mediator_map(self) -> Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]]:
+        with self._rlock:
+            return self._mediator_map
 
     @abstractmethod
     def add_object(self, mediator_key: Union[MediatorKey, str], item: Union[SortedList[Any], SortedDict[int, Article]]) \
@@ -120,10 +126,14 @@ class ArticleLinkTypeMediator(Mediator):
     def get_object(self, link_type: str) -> Optional[SortedList[Article]]:
         return super().get_object(link_type)
 
+
 class PublishedPrepubArticleMediator(Mediator):
-    def __init__(self):
-        super().__init__()
-        self._retrieve_initial_prepub_articles: SortedList[str] = SortedList()
+    @classmethod
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._retrieve_initial_prepub_articles: SortedList[str] = SortedList()
+        return cls._instance
 
     def _remove_doi_from_retrieval_list(self, doi: str) -> None:
         self._prepub_article_list_interaction(InteractionType.REMOVE, doi=doi)
@@ -145,8 +155,8 @@ class PublishedPrepubArticleMediator(Mediator):
                     self._retrieve_initial_prepub_articles.discard(doi)
             case InteractionType.GET:
                 pass
-
-        return self._retrieve_initial_prepub_articles
+        with self._rlock:
+            return self._retrieve_initial_prepub_articles
 
     def get_missing_initial_prepub_articles_list(self) -> SortedList[str]:
         return self._get_retrieve_initial_prepub_articles()

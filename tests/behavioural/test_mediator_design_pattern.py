@@ -13,8 +13,6 @@ from tests.creational.test_factory_design_pattern import load_article_factory_da
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
     test_doi = '10.7554/eLife.72498'
-    pprint.pp(prepub_test_file)
-    pprint.pp(PublishedPrepubArticleMediator()._retrieve_initial_prepub_articles)
     article: Optional[Article] = PublishedPrepubArticleMediator().get_first_stored_article_version(test_doi)
     assert PublishedPrepubArticleMediator() == PublishedPrepubArticleMediator()
     assert PublishedPrepubArticleMediator is not None
