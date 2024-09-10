@@ -1,4 +1,3 @@
-import pprint
 from typing import Optional
 
 import pytest
@@ -9,6 +8,14 @@ from modules.creational.factory_design_pattern import ArticleFactory
 from modules.utils.database.process_query_results import process_data
 from tests.creational.test_factory_design_pattern import load_article_factory_dataframe
 
+
+def test_singleton():
+    mediator1 = PublishedPrepubArticleMediator()
+    mediator2 = PublishedPrepubArticleMediator()
+    assert mediator1 == mediator2
+    assert mediator1 is not None
+    assert mediator1._lock == mediator2._lock
+    assert mediator1._lock is not None
 
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
