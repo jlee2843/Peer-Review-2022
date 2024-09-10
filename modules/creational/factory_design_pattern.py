@@ -206,19 +206,9 @@ class InstitutionFactory(Factory):
         Returns:
         Institution
             An instance of the Institution class.
+        return super().create_base_object(identifier, 'modules.building_block.Institution', *args, **kwargs)
 
     """
-
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Institution:
-        """
-        Create a base object with the given identifier.
-
-        :param identifier: A string indicating the identifier of the object.
-        :param args: Positional arguments to be passed to the superclass method.
-        :param kwargs: Keyword arguments to be passed to the superclass method.
-        :return: An instance of the Institution class.
-        """
-        return super().create_base_object(identifier, 'modules.building_block.Institution', *args, **kwargs)
 
 
 class AuthorFactory(Factory):
@@ -242,19 +232,9 @@ class AuthorFactory(Factory):
 
         Returns:
         - Author: The created `Author` object.
-
-    """
-
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Author:
-        """
-        :param identifier: The identifier for the base object.
-        :param args: Positional arguments to pass to super().create_base_object().
-        :param kwargs: Keyword arguments to pass to super().create_base_object().
-        :return: The created Author object.
-
-        """
         return super().create_base_object(identifier, 'modules.building_block.Author', args, kwargs)
 
+    """
 
 class CategoryFactory(Factory):
     """
@@ -284,19 +264,8 @@ class CategoryFactory(Factory):
         Category
             The created `Category` object.
 
-    """
-
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Category:
-        """
-        Create a base object.
-
-        :param identifier: The identifier of the object.
-        :param args: Additional positional arguments to be passed to the super method.
-        :param kwargs: Additional keyword arguments to be passed to the super method.
-        :return: The created Category object.
-        """
         return super().create_base_object(identifier, 'modules.building_block.Category', *args, **kwargs)
-
+    """
 
 class ArticleFactory(Factory):
     """
@@ -399,6 +368,7 @@ class JournalFactory(Factory):
         return super().create_base_object(identifier, 'modules.building_block.Journal', *args, **kwargs)
 
 
+@dataclass
 class PublicationFactory(Factory):
     """
     The `PublicationFactory` class is a subclass of the `Factory` class. It provides methods for creating and
@@ -433,7 +403,22 @@ class PublicationFactory(Factory):
             - `Publication`: The retrieved `Publication` object.
 
     """
+    _journal: Optional[Journal] = None
+    _article: Optional[Article] = None
 
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Publication:
-        return super().create_base_object(identifier, 'modules.building_block.Publication',
-                                          *args, **kwargs)
+    @property
+    def journal(self) -> Journal:
+        return self._journal
+
+    @property
+    def article(self) -> Article:
+        return self._article
+
+    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Publication:
+        publication = super().create_base_object(identifier, 'modules.building_block.Publication',
+                                                 *args, **kwargs)
+        with self._wlock:
+            publication._article = kwargs.get('article')
+            publication._journal = kwargs.get('journal')
+
+        return publication

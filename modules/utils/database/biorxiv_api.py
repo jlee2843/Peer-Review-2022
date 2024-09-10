@@ -2,6 +2,7 @@
 The BioRvix_api module contains functions that interacts with the BioRvix database through its API and processes the
 information that is retrieved from the BioRvix database.
 """
+import inspect
 
 import pandas as pd
 
@@ -86,7 +87,9 @@ def create_publication(journal: Journal, article: Article) -> Publication:
 
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
-    return PublicationFactory().create_base_object(article.pub_doi, journal=journal, article=article)
+
+    return PublicationFactory().create_base_object(article.pub_doi, str(inspect.getmodule(Publication)),
+                                                   journal=journal, article=article)
 
 
 '''
