@@ -67,18 +67,13 @@ class Factory(ABC):
     _instance = None
     _lock = None
 
-    #TODO: need to fixed initiation
-    def __init__(self, *args, **kwargs):
-        if self._lock is None:
-            self._lock = rwlock.RWLockFair()
-            self._rlock = self._lock.gen_rlock()
-            self._wlock = self._lock.gen_wlock()
-
     @classmethod
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.__init__(*args, **kwargs)
+            cls._lock = rwlock.RWLockFair()
+            cls._rlock = cls._lock.gen_rlock()
+            cls._wlock = cls._lock.gen_wlock()
         return cls._instance
 
     @staticmethod
@@ -180,6 +175,7 @@ class DepartmentFactory(Factory):
             Create a base object.
 
             :param identifier: A string that represents the identifier of the base object.
+            :param classpath: A string that represents the location of the base object
             :param args: Optional positional arguments to be passed onto the base object creation.
             :param kwargs: Optional keyword arguments to be passed onto the base object creation.
             :return: An instance of the Department class.
