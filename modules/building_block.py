@@ -76,7 +76,7 @@ class BaseObject(ABC):
         return result
 
     @staticmethod
-    def _setattr(obj: object, fields: List[str], default: Any = NoDefaultValueGiven, **kwargs):
+    def _setattr(obj: 'BaseObject', fields: List[str], default: Any = NoDefaultValueGiven, **kwargs):
         """
         Sets the attributes of an object with the given fields.
 
@@ -86,8 +86,9 @@ class BaseObject(ABC):
         :param kwargs: Additional keyword arguments that will be used to set the field values.
         :return: None
         """
-        for field in fields:
-            setattr(obj, f"_{field}", BaseObject.get_value(field, default, **kwargs))
+        with obj._wlock:
+            for field in fields:
+                setattr(obj, f"_{field}", BaseObject.get_value(field, default, **kwargs))
 
 
 class MediatorKey(ABC):
