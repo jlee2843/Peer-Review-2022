@@ -196,7 +196,6 @@ class Article(BaseObject):
 
     _doi: str
     _title: str
-    _authors: str
     _authors: str  # todo: should be a list of Author object(s)
     _corr_authors: str  # todo: should be a list of Author object(s)
     _institution: str  # todo: should be an Institution object
