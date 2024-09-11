@@ -13,9 +13,10 @@ def test_singleton():
     mediator1 = PublishedPrepubArticleMediator()
     mediator2 = PublishedPrepubArticleMediator()
     assert mediator1 == mediator2
-    assert (mediator1 is None) == False
+    assert mediator1 is not None
     assert mediator1._lock == mediator2._lock
-    assert (mediator1._lock is None) == False
+    assert mediator1._lock is not None
+
 
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)
@@ -37,6 +38,7 @@ def test_get_first_stored_article_version(prepub_test_file):
     assert article.version == 4
     assert test_doi in PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
 
+
 def test_complete_article_info(completed_test_file):
     test_doi = '10.1155/2022/3248731'
     assert (PublishedPrepubArticleMediator().get_first_stored_article_version(test_doi) is not None) == True
@@ -48,8 +50,6 @@ def test_complete_article_info(completed_test_file):
     assert test_doi not in PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
 
 
-
-# TODO: need to implement a function that receives the initial version of the published article
 @pytest.fixture
 def prepub_test_file():
     from pathlib import Path
