@@ -13,9 +13,9 @@ def test_singleton():
     mediator1 = PublishedPrepubArticleMediator()
     mediator2 = PublishedPrepubArticleMediator()
     assert mediator1 == mediator2
-    assert mediator1 is not None
+    assert (mediator1 is None) == False
     assert mediator1._lock == mediator2._lock
-    assert mediator1._lock is not None
+    assert (mediator1._lock is None) == False
 
 def test_published_prepub_mediator(prepub_test_file):
     load_article_factory_dataframe(prepub_test_file)

@@ -19,16 +19,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Mediator(ABC):
     _instance = None
-    _lock = None
 
     @classmethod
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.__init__(**kwargs)
-            cls._lock = rwlock.RWLockFair()
-            cls._rlock = cls._lock.gen_rlock()
-            cls._wlock = cls._lock.gen_wlock()
+            cls._lock: rwlock.RWLockFair = rwlock.RWLockFair()
+            cls._rlock: rwlock.RWLockFair._aReader = cls._lock.gen_rlock()
+            cls._wlock: rwlock.RWLockFair._aWriter = cls._lock.gen_wlock()
             cls._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         return cls._instance
 
