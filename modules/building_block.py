@@ -4,6 +4,8 @@ from datetime import datetime
 from threading import Lock
 from typing import Optional, List, Any
 
+from readerwriterlock import rwlock
+
 
 class NoDefaultValueGiven(Exception):
     pass
@@ -47,21 +49,14 @@ class BaseObject(ABC):
             **kwargs: Keyword arguments containing field-value pairs
 
     """
-
-    @staticmethod
-    def not_empty(*args, **kwargs) -> bool:
-        """
-        Check if the arguments and keyword arguments are empty.
-
-        :param args: Positional arguments.
-        :param kwargs: Keyword arguments.
-        :return: True if the arguments are not empty, else raise RuntimeError.
-        :raises RuntimeError: If no arguments or keyword arguments are provided.
-        """
+    @classmethod
+    def __new__(cls, *args, **kwargs):
         if args == () and kwargs == {}:
             raise RuntimeError('Please instantiate class through the corresponding Factory')
 
-        return True
+        cls._lock = rwlock.RWLockFair()
+        cls._rlock = cls._lock.gen_rlock()
+        cls._wlock = cls._lock.gen_wlock()
 
     @staticmethod
     def get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any:
