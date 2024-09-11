@@ -129,11 +129,23 @@ def test_instantiation_factory():
 
 def test_singleton_design_pattern():
     assert ArticleFactory() is ArticleFactory()
+    assert ArticleFactory() is not None
     assert JournalFactory() is JournalFactory()
+    assert JournalFactory() is not None
+    assert AuthorFactory() is AuthorFactory()
+    assert ArticleFactory() is not None
     assert PublicationFactory() is PublicationFactory()
+    assert PublicationFactory() is not None
     assert DepartmentFactory() is DepartmentFactory()
+    assert DepartmentFactory() is not None
     assert InstitutionFactory() is InstitutionFactory()
+    assert InstitutionFactory() is not None
     assert CategoryFactory() is CategoryFactory()
+    assert CategoryFactory() is not None
+
+    assert ArticleFactory()._rlock is not None
+    assert ArticleFactory()._wlock is not None
+
 
 def test_create_article(prepub_query):
     """
@@ -180,7 +192,7 @@ def test_create_journal(pubs_query: Query) -> None:
     :return: None
     """
 
-    journal = create_journal(get_journal_name(pubs_query))
+    journal = create_journal(name=get_journal_name(pubs_query))
     assert get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
     assert journal is JournalFactory().get_base_object(journal.title)
@@ -221,8 +233,8 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
                              pub_doi=df.loc['0', 'Published'])
 
     assert article is not None
-    journal = create_journal(get_journal_name(pubs_query))
-    publication = create_publication(journal, article)
+    journal = create_journal(name=get_journal_name(pubs_query))
+    publication = create_publication(journal=journal, article=article)
     assert publication is PublicationFactory().get_base_object(article.pub_doi)
 
 def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Query) -> None:
@@ -265,4 +277,4 @@ def test_add_publication_list(prepub_test_file):
     ArticleFactory._pub_list = set()
     df: pd.DataFrame = load_article_factory_dataframe(prepub_test_file)
     assert sorted(list(set(df[df.Published.apply(lambda x: x.upper()) != 'NA'].Published))) == \
-           sorted(ArticleFactory().get_publication_list())
+           sorted(ArticleFactory().publication_list)

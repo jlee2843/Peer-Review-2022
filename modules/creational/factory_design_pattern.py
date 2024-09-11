@@ -1,6 +1,6 @@
 from importlib import import_module
 from types import ModuleType
-from typing import Dict, Set
+from typing import Dict
 
 from readerwriterlock import rwlock
 from sortedcontainers import SortedList
@@ -65,15 +65,14 @@ class Factory(ABC):
     """
     _factory_map: Dict[str, Any] = {}
     _instance = None
-    _lock = None
 
     @classmethod
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._lock = rwlock.RWLockFair()
-            cls._rlock = cls._lock.gen_rlock()
-            cls._wlock = cls._lock.gen_wlock()
+            cls._lock: rwlock.RWLockFair = rwlock.RWLockFair()
+            cls._rlock: rwlock.RWLockFair._aReader = cls._lock.gen_rlock()
+            cls._wlock: rwlock.RWLockFair._aWriter = cls._lock.gen_wlock()
         return cls._instance
 
     @staticmethod
@@ -134,11 +133,11 @@ class Factory(ABC):
         word arguments to be passed to the class constructor.
         :return: The created base object.
         """
-        factory_object = self.get_base_object(identifier)
-        if factory_object is None:
-            factory_object = Factory.import_class(class_path)(*args, **kwargs)
-            self.update_factory_map(identifier, factory_object)
-        return factory_object
+        base_object = self.get_base_object(identifier)
+        if base_object is None:
+            base_object = Factory.import_class(class_path)(*args, **kwargs)
+            self._update_factory_map(identifier, base_object)
+        return base_object
 
     def get_base_object(self, identifier: str, default=None) -> Any:
         """
@@ -151,122 +150,12 @@ class Factory(ABC):
         with self._rlock:
             return self._factory_map.get(identifier, default)
 
-    def update_factory_map(self, identifier: str, factory_object: Any):
+    def _update_factory_map(self, identifier: str, base_object: Any):
         with self._wlock:
-            self._factory_map[identifier] = factory_object
-
-class DepartmentFactory(Factory):
-    """
-    A factory class for creating and retrieving Department objects.
-
-    This class extends the Factory class and provides methods for creating and retrieving Department objects.
-
-    Methods:
-        create_object(identifier: str, *args, **kwargs) -> Department:
-            Creates a new Department object with the given identifier and additional arguments.
-
-        get_object(identifier: str) -> Department:
-            Retrieves the Department object with the given identifier.
-
-    """
-
-    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Department:
-        """
-            Create a base object.
-
-            :param identifier: A string that represents the identifier of the base object.
-            :param classpath: A string that represents the location of the base object
-            :param args: Optional positional arguments to be passed onto the base object creation.
-            :param kwargs: Optional keyword arguments to be passed onto the base object creation.
-            :return: An instance of the Department class.
-        """
-        return super().create_base_object(identifier, classpath=classpath, *args, **kwargs)
+            self._factory_map[identifier] = base_object
 
 
-class InstitutionFactory(Factory):
-    """
-    InstitutionFactory Class
-    =======================
-
-    This class is a subclass of Factory and is used to create instances of the Institution class.
-
-    Methods
-    -------
-    create_base_object(identifier: str, *args, **kwargs) -> Institution
-        Create a base object with the given identifier.
-
-        Parameters:
-        - identifier: str
-            A string indicating the identifier of the object.
-        - args:
-            Positional arguments to be passed to the superclass method.
-        - kwargs:
-            Keyword arguments to be passed to the superclass method.
-
-        Returns:
-        Institution
-            An instance of the Institution class.
-        return super().create_base_object(identifier, 'modules.building_block.Institution', *args, **kwargs)
-
-    """
-
-
-class AuthorFactory(Factory):
-    """
-
-    AuthorFactory Class
-    ===================
-
-    This class provides a factory to create instances of authors. It extends the `Factory` class.
-
-    Methods:
-    --------
-
-    create_base_object(identifier: str, *args, **kwargs) -> Author
-        Creates a new instance of an `Author` object.
-
-        Parameters:
-        - identifier (str): The identifier for the base object.
-        - *args: Positional arguments to pass to the `create_base_object()` method of the superclass.
-        - **kwargs: Keyword arguments to pass to the `create_base_object()` method of the superclass.
-
-        Returns:
-        - Author: The created `Author` object.
-        return super().create_base_object(identifier, 'modules.building_block.Author', args, kwargs)
-
-    """
-
-class CategoryFactory(Factory):
-    """
-
-    CategoryFactory Class
-    =====================
-
-    Subclass of `Factory` that creates `Category` objects.
-
-    Methods
-    -------
-
-    create_base_object(identifier: str, *args, **kwargs) -> Category:
-        Creates a base `Category` object.
-
-        Parameters
-        ----------
-        identifier : str
-            The identifier for the `Category` object.
-        *args : tuple
-            Additional positional arguments to pass to the `Category` constructor.
-        **kwargs : dict
-            Additional keyword arguments to pass to the `Category` constructor.
-
-        Returns
-        -------
-        Category
-            The created `Category` object.
-
-        return super().create_base_object(identifier, 'modules.building_block.Category', *args, **kwargs)
-    """
-
+@dataclass
 class ArticleFactory(Factory):
     """
 
@@ -287,9 +176,20 @@ class ArticleFactory(Factory):
         - `get_publication_list() -> List[str]`: Returns a list of DOIs in the publication list.
 
     """
-    _pub_list: Set[str] = set()
 
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Article:
+    @property
+    def publication_list(self) -> List[str]:
+        with self._rlock:
+            return list(self._pub_list)
+
+    @classmethod
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            cls._pub_list = set()
+        return cls._instance
+
+    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Article:
         """
         :param identifier: A string representing the identifier of the object to be created.
         :param args: Additional positional arguments to be passed to the object's constructor.
@@ -303,12 +203,12 @@ class ArticleFactory(Factory):
         """
 
         kwargs.update(doi=identifier)
-        class_ = Factory.import_class('modules.building_block.Article')
-        new_object = class_(*args, **kwargs)
+        class_ = Factory.import_class(classpath)
+        base_object: Article = class_(*args, **kwargs)
         articles: SortedList = super().get_base_object(identifier, SortedList(key=lambda x: x.version))
-        articles.add(new_object)
-        self.update_factory_map(identifier, articles)
-        return new_object
+        articles.add(base_object)
+        self._update_factory_map(identifier, articles)
+        return base_object
 
     def get_base_object(self, identifier: str, **kwargs) -> Optional[Article]:
         result: Optional[SortedList] = super().get_base_object(identifier)
@@ -331,41 +231,6 @@ class ArticleFactory(Factory):
     def get_publication_list(self) -> List[str]:
         with self._rlock:
             return list(self._pub_list)
-
-
-class JournalFactory(Factory):
-    """
-    JournalFactory
-
-    Class for creating and retrieving Journal objects.
-
-    Methods:
-        * create_object(identifier: str, *args, **kwargs) -> Journal
-            Method for creating a new Journal object.
-
-            Parameters:
-                - identifier: str
-                    The identifier of the Journal.
-
-            Returns:
-                - Journal
-                    The created Journal object.
-
-        * get_object(identifier: str) -> Journal
-            Method for retrieving a Journal object.
-
-            Parameters:
-                - identifier: str
-                    The identifier of the Journal.
-
-            Returns:
-                - Journal
-                    The retrieved Journal object.
-    """
-
-    def create_base_object(self, identifier: str, *args, **kwargs) -> Journal:
-        kwargs.update(title=identifier)
-        return super().create_base_object(identifier, 'modules.building_block.Journal', *args, **kwargs)
 
 
 @dataclass
@@ -415,10 +280,149 @@ class PublicationFactory(Factory):
         return self._article
 
     def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Publication:
-        publication = super().create_base_object(identifier, 'modules.building_block.Publication',
-                                                 *args, **kwargs)
+        publication = super().create_base_object(identifier, classpath, *args, **kwargs)
         with self._wlock:
-            publication._article = kwargs.get('article')
-            publication._journal = kwargs.get('journal')
+            publication.article = kwargs.get('article')
+            publication.journal = kwargs.get('journal')
 
         return publication
+
+
+class JournalFactory(Factory):
+    """
+    JournalFactory
+
+    Class for creating and retrieving Journal objects.
+
+    Methods:
+        * create_object(identifier: str, *args, **kwargs) -> Journal
+            Method for creating a new Journal object.
+
+            Parameters:
+                - identifier: str
+                    The identifier of the Journal.
+
+            Returns:
+                - Journal
+                    The created Journal object.
+
+        * get_object(identifier: str) -> Journal
+            Method for retrieving a Journal object.
+
+            Parameters:
+                - identifier: str
+                    The identifier of the Journal.
+
+            Returns:
+                - Journal
+                    The retrieved Journal object.
+    """
+
+    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Journal:
+        kwargs.update(title=identifier)
+        return super().create_base_object(identifier=identifier, class_path=classpath, *args, **kwargs)
+
+
+class DepartmentFactory(Factory):
+    """
+    A factory class for creating and retrieving Department objects.
+
+    This class extends the Factory class and provides methods for creating and retrieving Department objects.
+
+    Methods:
+        create_object(identifier: str, *args, **kwargs) -> Department:
+            Creates a new Department object with the given identifier and additional arguments.
+
+        get_object(identifier: str) -> Department:
+            Retrieves the Department object with the given identifier.
+
+    """
+    pass
+
+
+class InstitutionFactory(Factory):
+    """
+    InstitutionFactory Class
+    =======================
+
+    This class is a subclass of Factory and is used to create instances of the Institution class.
+
+    Methods
+    -------
+    create_base_object(identifier: str, *args, **kwargs) -> Institution
+        Create a base object with the given identifier.
+
+        Parameters:
+        - identifier: str
+            A string indicating the identifier of the object.
+        - args:
+            Positional arguments to be passed to the superclass method.
+        - kwargs:
+            Keyword arguments to be passed to the superclass method.
+
+        Returns:
+        Institution
+            An instance of the Institution class.
+        return super().create_base_object(identifier, 'modules.building_block.Institution', *args, **kwargs)
+
+    """
+    pass
+
+
+class AuthorFactory(Factory):
+    """
+
+    AuthorFactory Class
+    ===================
+
+    This class provides a factory to create instances of authors. It extends the `Factory` class.
+
+    Methods:
+    --------
+
+    create_base_object(identifier: str, *args, **kwargs) -> Author
+        Creates a new instance of an `Author` object.
+
+        Parameters:
+        - identifier (str): The identifier for the base object.
+        - *args: Positional arguments to pass to the `create_base_object()` method of the superclass.
+        - **kwargs: Keyword arguments to pass to the `create_base_object()` method of the superclass.
+
+        Returns:
+        - Author: The created `Author` object.
+        return super().create_base_object(identifier, 'modules.building_block.Author', args, kwargs)
+
+    """
+    pass
+
+class CategoryFactory(Factory):
+    """
+
+    CategoryFactory Class
+    =====================
+
+    Subclass of `Factory` that creates `Category` objects.
+
+    Methods
+    -------
+
+    create_base_object(identifier: str, *args, **kwargs) -> Category:
+        Creates a base `Category` object.
+
+        Parameters
+        ----------
+        identifier : str
+            The identifier for the `Category` object.
+        *args : tuple
+            Additional positional arguments to pass to the `Category` constructor.
+        **kwargs : dict
+            Additional keyword arguments to pass to the `Category` constructor.
+
+        Returns
+        -------
+        Category
+            The created `Category` object.
+
+        return super().create_base_object(identifier, 'modules.building_block.Category', *args, **kwargs)
+    """
+    pass

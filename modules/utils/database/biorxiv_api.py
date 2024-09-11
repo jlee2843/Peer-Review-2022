@@ -2,7 +2,6 @@
 The BioRvix_api module contains functions that interacts with the BioRvix database through its API and processes the
 information that is retrieved from the BioRvix database.
 """
-import inspect
 
 import pandas as pd
 
@@ -12,6 +11,9 @@ from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
 from modules.utils.database.process_query_results import get_value, convert_date
 
+PUBLICATION_PATH = Publication.__module__ + '.' + Publication.__qualname__
+ARTICLE_PATH = Article.__module__ + '.' + Article.__qualname__
+JOURNAL_PATH = Journal.__module__ + '.' + Journal.__qualname__
 
 # The create_article function uses the Factory and Mediator Design Patterns.
 def create_article(doi: str, *args: object, **kwargs: object) -> Article:
@@ -34,7 +36,7 @@ def create_article(doi: str, *args: object, **kwargs: object) -> Article:
 
     # The following line is importing ArticleFactory from modules.creational.factory_design_pattern.ArticleFactory is a
     # factory for creating Article objects in the context of the factory design pattern.
-    article = ArticleFactory().create_base_object(identifier=doi, *args, **kwargs)
+    article = ArticleFactory().create_base_object(identifier=doi, classpath=ARTICLE_PATH, *args, **kwargs)
     pub_doi = article.pub_doi
     # if created article object has a published DOI then added it to Publication list
     if pub_doi.upper() != 'NA':
@@ -69,7 +71,7 @@ def create_journal(name: str) -> Journal:
     :return: An instance of the Journal class.
 
     """
-    return JournalFactory().create_base_object(identifier=name)
+    return JournalFactory().create_base_object(identifier=name, classpath=JOURNAL_PATH)
 
 
 # This code is the implementation of the Factory design pattern, where a Factory class PublicationFactory is
@@ -88,7 +90,7 @@ def create_publication(journal: Journal, article: Article) -> Publication:
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
 
-    return PublicationFactory().create_base_object(article.pub_doi, str(inspect.getmodule(Publication)),
+    return PublicationFactory().create_base_object(identifier=article.pub_doi, classpath=PUBLICATION_PATH,
                                                    journal=journal, article=article)
 
 
