@@ -1,7 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
-from threading import Lock
+from enum import Enum
 from typing import Optional, List, Any
 
 from readerwriterlock import rwlock
@@ -49,14 +49,14 @@ class BaseObject(ABC):
             **kwargs: Keyword arguments containing field-value pairs
 
     """
-    @classmethod
-    def __new__(cls, *args, **kwargs):
+
+    def __init__(self, *args, **kwargs) -> None:
         if args == () and kwargs == {}:
             raise RuntimeError('Please instantiate class through the corresponding Factory')
 
-        cls._lock = rwlock.RWLockFair()
-        cls._rlock = cls._lock.gen_rlock()
-        cls._wlock = cls._lock.gen_wlock()
+        self._lock = rwlock.RWLockFair()
+        self._rlock = self._lock.gen_rlock()
+        self._wlock = self._lock.gen_wlock()
 
     @staticmethod
     def get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any:
@@ -105,7 +105,7 @@ class Department(MediatorKey, BaseObject):
         :param kwargs: (optional) Keyword arguments.
 
         """
-        pass
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
@@ -118,7 +118,7 @@ class Institution(MediatorKey, BaseObject):
         :param kwargs: (optional) Keyword arguments.
 
         """
-        pass
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
@@ -131,7 +131,7 @@ class Category(MediatorKey, BaseObject):
         :param kwargs: (optional) Keyword arguments.
 
         """
-        pass
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
@@ -144,7 +144,7 @@ class Author(BaseObject):
         :param kwargs: (optional) Keyword arguments.
 
         """
-        pass
+        super().__init__(*args, **kwargs)
 
 
 @dataclass
@@ -211,10 +211,10 @@ class Article(BaseObject):
     _publication_link: Optional[str]
 
     def __init__(self, *args, **kwargs):
-        super().not_empty(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         # fields that should have a value when the Article class is instantiated
-        fields = ['doi', 'title', 'authors', 'corr_authors', 'institution', 'date',
-                  'version', 'type', 'category', 'xml', 'pub_doi']
+        fields = ['doi', 'title', 'authors', 'corr_authors', 'institution', 'date', 'version', 'type', 'category',
+                  'xml', 'pub_doi']
         super()._setattr(self, fields, **kwargs)
         # fields that may not have a value when the Article class is instantiated
         fields = ['authors_detail', 'corr_authors_detail', 'publication_link']
@@ -265,7 +265,7 @@ class Journal(BaseObject):
     _title: str
 
     def __init__(self, *args, **kwargs):
-        super().not_empty(args, kwargs)
+        super().__init__(*args, **kwargs)
         super()._setattr(self, ['title'], **kwargs)
         super()._setattr(self, ['prefix', 'issn'], '', **kwargs)
         super()._setattr(self, ['impact_factor'], 0.0, **kwargs)
@@ -306,7 +306,7 @@ class Publication(BaseObject):
     _pub_doi: str
 
     def __init__(self, *args, **kwargs) -> None:
-        super().not_empty(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         super()._setattr(self, ['journal', 'article'], **kwargs)
         article = self._article
         self._name = f'{article.title}\n{article.pub_doi}'
@@ -327,61 +327,6 @@ class Publication(BaseObject):
     @journal.setter
     def journal(self, journal: Journal) -> None:
         self._journal = journal
-
-
-class Singleton(type):
-    """
-    Singleton
-
-    A metaclass that implements the Singleton design pattern.
-
-    Attributes:
-        _instance (dict): A dictionary that stores the instances of the Singleton classes.
-        _lock (Lock): A lock to ensure thread-safe creation of the Singleton instances.
-
-    Methods:
-        __call__(*args, **kwargs)
-            Return a single instance of the Singleton class.
-
-    Example:
-        class MyClass(metaclass=Singleton):
-            def __init__(self, value):
-                self._value = value
-
-        obj1 = MyClass(1)
-        obj2 = MyClass(2)
-
-        print(obj1.value)  # Output: 1
-        print(obj2.value)  # Output: 1
-        print(obj1 is obj2)  # Output: True
-    """
-    _instance = {}
-
-    _lock: Lock = Lock()
-
-    def __call__(cls, *args, **kwargs):
-        """
-        Possible changes to the value of the `__init__` argument do not affect
-        the returned instance.
-        """
-        # Now, imagine that the program has just been launched. Since there's no
-        # Singleton instance yet, multiple threads can simultaneously pass the
-        # previous conditional and reach this point almost at the same time. The
-        # first of them will acquire lock and will proceed further, while the
-        # rest will wait here.
-        with cls._lock:
-            # The first thread to acquire the lock, reaches this conditional,
-            # goes inside and creates the Singleton instance. Once it leaves the
-            # lock block, a thread that might have been waiting for the lock
-            # release may then enter this section. But since the Singleton field
-            # is already initialized, the thread won't create a new object.
-            if cls not in cls._instance:
-                instance = super().__call__(*args, **kwargs)
-                cls._instance[cls] = instance
-        return cls._instance[cls]
-
-
-from enum import Enum
 
 
 class InteractionType(Enum):
