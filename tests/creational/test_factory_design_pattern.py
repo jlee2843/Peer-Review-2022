@@ -180,7 +180,7 @@ def test_create_article(prepub_query):
                        pub_doi=df.loc[row, 'Published'])
 
         assert doi == '10.1101/2021.04.29.21256344'
-        assert ArticleFactory().get_base_object(identifier=doi) is not None
+        assert ArticleFactory().get_factory_object(identifier=doi) is not None
 
 
 def test_create_journal(pubs_query: Query) -> None:
@@ -195,7 +195,7 @@ def test_create_journal(pubs_query: Query) -> None:
     journal = create_journal(name=get_journal_name(pubs_query))
     assert get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
-    assert journal is JournalFactory().get_base_object(journal.title)
+    assert journal is JournalFactory().get_factory_object(journal.title)
     assert journal.prefix == ''
     assert journal.issn == ''
     assert journal.impact_factor == 0.0
@@ -235,7 +235,7 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     assert article is not None
     journal = create_journal(name=get_journal_name(pubs_query))
     publication = create_publication(journal=journal, article=article)
-    assert publication is PublicationFactory().get_base_object(article.pub_doi)
+    assert publication is PublicationFactory().get_factory_object(article.pub_doi)
 
 def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Query) -> None:
     """

@@ -7,62 +7,13 @@ from sortedcontainers import SortedList
 
 from modules.building_block import *
 
+from abc import ABC
+from types import ModuleType
+from importlib import import_module
+from typing import Any, Dict
 
-class Factory(ABC):
-    """
 
-    Factory class for creating and managing objects.
-
-    The Factory class provides a way to dynamically create objects based on given class paths. It ensures that only one
-    instance of each object is created and managed throughout the lifetime of the class.
-
-    Class Attributes:
-        - _factory_map: Dict[str, Any]
-            A dictionary to store the created objects with their respective identifiers as keys.
-        - _lock: RLock
-            A reentrant lock to enable thread-safe operations on the _factory_map.
-
-    Methods:
-        - import_class(path: str) -> Any
-            Import and return a class defined in the given path.
-
-            Parameters:
-                - path: str
-                    The full path of the class.
-
-            Returns:
-                - Any: The imported class.
-
-        - create_base_object(identifier: str, class_path: str, *args, **kwargs) -> Any
-            Create and return an object of the given class path.
-
-            If an object with the same identifier has already been created, it returns the existing object.
-
-            Parameters:
-                - identifier: str
-                    Unique identifier for the object.
-                - class_path: str
-                    Path to the class from which the object is created.
-                - *args: Tuple
-                    Optional positional arguments to be passed to the class constructor.
-                - **kwargs: Dict
-                    Optional keyword arguments to be passed to the class constructor.
-
-            Returns:
-                - Any: The created or existing object.
-
-        - get_base_object(identifier: str, default=None) -> Any
-            Get the object associated with the given identifier.
-
-            Parameters:
-                - identifier: str
-                    Identifier of the object.
-                - default: Any
-                    Default value to return if no object is found.
-
-            Returns:
-                - Any: The object associated with the identifier, or the default value if not found.
-    """
+class AbstractSingletonFactory(ABC):
     _factory_map: Dict[str, Any] = {}
     _instance = None
 
@@ -70,94 +21,60 @@ class Factory(ABC):
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            i = cls._instance
-            i._lock: rwlock.RWLockFair = rwlock.RWLockFair()
-            i._rlock: rwlock.RWLockFair._aReader = i._lock.gen_rlock()
-            i._wlock: rwlock.RWLockFair._aWriter = i._lock.gen_wlock()
+            cls._instance._lock = rwlock.RWLockFair()
+            cls._instance._rlock = cls._instance._lock.gen_rlock()
+            cls._instance._wlock = cls._instance._lock.gen_wlock()
         return cls._instance
 
-    @staticmethod
-    def import_class(path: str) -> Any:
-        """
-        :param path: The fully qualified path of the class to import. It should be in the format
-                     'module.path.ClassName', where 'module.path' is the module path and 'ClassName' is the name of the
-                     class.
-        :return: The imported class if it exists.
-        :rtype: Any
-
-        This function imports a class dynamically using its fully qualified path. It extracts the module path and class
-        name from the given path, and then tries to import the module and retrieve the class using the module path and
-        class name.
-
-        If the module or class does not exist, it raises a RuntimeError with an appropriate error message.
-
-        Example usage:
-        ```
-        import_class('my_module.path.MyClass')
-        ```
-        """
+    def _import_class(self, path: str) -> Any:
         module_path, _, class_name = path.rpartition('.')
         class_: Any
-
         try:
-            module: ModuleType = Factory._import_module(module_path)
+            module: ModuleType = self._import_module(module_path)
             try:
                 class_ = getattr(module, class_name)
             except AttributeError:
                 raise RuntimeError(f'Class does not exist: {class_name}')
         except ImportError:
             raise RuntimeError(f'Module does not exist: {module_path}')
-
         return class_
 
-    @staticmethod
-    def _import_module(module_path: str) -> ModuleType:
+    def _import_module(self, module_path: str) -> ModuleType:
         """
         Import and return a module defined in the given path.
-
-        :param module_path: The full path of the module.
-        :return: The imported module.
         """
         return import_module(module_path)
 
-    def create_base_object(self, identifier: str, class_path: str, *args, **kwargs) -> Any:
+    def create_factory_object(self, identifier: str, class_path: str, *args, **kwargs) -> Any:
         """
-        This method creates a base object using the given identifier, class path, and arguments. It first checks if a
-        base object with the given identifier already exists in the factory map. If not, it imports the class using the
-        provided class path and constructs an instance of the class using the arguments and keyword arguments. Finally,
-        it adds the newly created base object to the factory map under the given identifier and returns the object.
+        This method creates a factory object using the given identifier, class path, and arguments. It first checks if an
+        object with the given identifier already exists. If not, it imports the class and constructs an instance of the class.
+        """
+        factory_object = self.get_factory_object(identifier)
+        if factory_object is None:
+            factory_object = self._import_class(class_path)(*args, **kwargs)
+            self._update_factory_map(identifier, factory_object)
+        return factory_object
 
-        :param identifier: The identifier of the base object.
-        :param class_path: The fully qualified path to the class of the base object.
-        :param args: Positional arguments to be passed to the class constructor.
-        :param kwargs: Key
-        word arguments to be passed to the class constructor.
-        :return: The created base object.
+    def get_factory_object(self, identifier: str, default=None) -> Any:
         """
-        base_object = self.get_base_object(identifier)
-        if base_object is None:
-            base_object = Factory.import_class(class_path)(*args, **kwargs)
-            self._update_factory_map(identifier, base_object)
-        return base_object
-
-    def get_base_object(self, identifier: str, default=None) -> Any:
+        Retrieves the object associated with the given identifier from the factory.
         """
-        Retrieves the base object associated with the given identifier.
-
-        :param identifier: The identifier of the base object to retrieve.
-        :param default: The default value to return if the identifier is not found.
-        :return: The base object associated with the identifier, or the default value if not found.
-        """
+        # Acquire read lock before retrieving object
         with self._rlock:
             return self._factory_map.get(identifier, default)
 
-    def _update_factory_map(self, identifier: str, base_object: Any):
+    def _update_factory_map(self, identifier: str, factory_object: Any):
+        """
+        Updates the factory map with new factory object and its associated identifier.
+        """
+        # Acquire write lock before updating map
         with self._wlock:
-            self._factory_map[identifier] = base_object
+            self._factory_map[identifier] = factory_object
 
 
 @dataclass
-class ArticleFactory(Factory):
+class ArticleFactory(AbstractSingletonFactory):
     """
 
     The `ArticleFactory` class is a subclass of `Factory` and is used to create and manage `Article` objects.
@@ -204,15 +121,15 @@ class ArticleFactory(Factory):
         """
 
         kwargs.update(doi=identifier)
-        class_ = Factory.import_class(classpath)
+        class_ = self._import_class(classpath)
         base_object: Article = class_(*args, **kwargs)
-        articles: SortedList = super().get_base_object(identifier, SortedList(key=lambda x: x.version))
+        articles: SortedList = super().get_factory_object(identifier, SortedList(key=lambda x: x.version))
         articles.add(base_object)
         self._update_factory_map(identifier, articles)
         return base_object
 
-    def get_base_object(self, identifier: str, **kwargs) -> Optional[Article]:
-        result: Optional[SortedList] = super().get_base_object(identifier)
+    def get_factory_object(self, identifier: str, **kwargs) -> Optional[Article]:
+        result: Optional[SortedList] = super().get_factory_object(identifier)
         if result is not None:
             result = result.__getitem__(0)
 
@@ -235,7 +152,7 @@ class ArticleFactory(Factory):
 
 
 @dataclass
-class PublicationFactory(Factory):
+class PublicationFactory(AbstractSingletonFactory):
     """
     The `PublicationFactory` class is a subclass of the `Factory` class. It provides methods for creating and
     retrieving `Publication` objects.
@@ -280,8 +197,8 @@ class PublicationFactory(Factory):
     def article(self) -> Article:
         return self._article
 
-    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Publication:
-        publication = super().create_base_object(identifier, classpath, *args, **kwargs)
+    def create_factory_object(self, identifier: str, classpath: str, *args, **kwargs) -> Publication:
+        publication: Publication = super().create_factory_object(identifier, classpath, *args, **kwargs)
         with self._wlock:
             publication.article = kwargs.get('article')
             publication.journal = kwargs.get('journal')
@@ -289,7 +206,7 @@ class PublicationFactory(Factory):
         return publication
 
 
-class JournalFactory(Factory):
+class JournalFactory(AbstractSingletonFactory):
     """
     JournalFactory
 
@@ -319,12 +236,12 @@ class JournalFactory(Factory):
                     The retrieved Journal object.
     """
 
-    def create_base_object(self, identifier: str, classpath: str, *args, **kwargs) -> Journal:
+    def create_factory_object(self, identifier: str, classpath: str, *args, **kwargs) -> Journal:
         kwargs.update(title=identifier)
-        return super().create_base_object(identifier=identifier, class_path=classpath, *args, **kwargs)
+        return super().create_factory_object(identifier=identifier, class_path=classpath, *args, **kwargs)
 
 
-class DepartmentFactory(Factory):
+class DepartmentFactory(AbstractSingletonFactory):
     """
     A factory class for creating and retrieving Department objects.
 
@@ -341,7 +258,7 @@ class DepartmentFactory(Factory):
     pass
 
 
-class InstitutionFactory(Factory):
+class InstitutionFactory(AbstractSingletonFactory):
     """
     InstitutionFactory Class
     =======================
@@ -370,7 +287,7 @@ class InstitutionFactory(Factory):
     pass
 
 
-class AuthorFactory(Factory):
+class AuthorFactory(AbstractSingletonFactory):
     """
 
     AuthorFactory Class
@@ -396,7 +313,7 @@ class AuthorFactory(Factory):
     """
     pass
 
-class CategoryFactory(Factory):
+class CategoryFactory(AbstractSingletonFactory):
     """
 
     CategoryFactory Class

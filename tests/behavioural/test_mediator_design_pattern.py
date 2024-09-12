@@ -25,7 +25,7 @@ def test_published_prepub_mediator(prepub_test_file):
     assert PublishedPrepubArticleMediator() == PublishedPrepubArticleMediator()
     assert PublishedPrepubArticleMediator is not None
     assert article is not None
-    expected: Optional[Article] = ArticleFactory().get_base_object(article.doi)
+    expected: Optional[Article] = ArticleFactory().get_factory_object(article.doi)
     assert article.doi == expected.doi
     assert article.version == expected.version
 

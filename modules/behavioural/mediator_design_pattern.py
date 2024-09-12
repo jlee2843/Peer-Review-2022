@@ -24,11 +24,10 @@ class Mediator(ABC):
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            i = cls._instance
-            i._lock: rwlock.RWLockFair = rwlock.RWLockFair()
-            i._rlock: rwlock.RWLockFair._aReader = i._lock.gen_rlock()
-            i._wlock: rwlock.RWLockFair._aWriter = i._lock.gen_wlock()
-            i._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
+            cls._instance._lock = rwlock.RWLockFair()
+            cls._instance._rlock = cls._instance._lock.gen_rlock()
+            cls._instance._wlock = cls._instance._lock.gen_wlock()
+            cls._instance._mediator_map: Dict[Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         return cls._instance
 
     @property

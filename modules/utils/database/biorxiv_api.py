@@ -71,7 +71,7 @@ def create_journal(name: str) -> Journal:
     :return: An instance of the Journal class.
 
     """
-    return JournalFactory().create_base_object(identifier=name, classpath=JOURNAL_PATH)
+    return JournalFactory().create_factory_object(identifier=name, classpath=JOURNAL_PATH)
 
 
 # This code is the implementation of the Factory design pattern, where a Factory class PublicationFactory is
@@ -90,7 +90,7 @@ def create_publication(journal: Journal, article: Article) -> Publication:
     # The new Publication object uses the Digital Object Identifier (DOI) returned by the get_pub_doi method of the
     # Article instance as the identifier.
 
-    return PublicationFactory().create_base_object(identifier=article.pub_doi, classpath=PUBLICATION_PATH,
+    return PublicationFactory().create_factory_object(identifier=article.pub_doi, classpath=PUBLICATION_PATH,
                                                    journal=journal, article=article)
 
 
