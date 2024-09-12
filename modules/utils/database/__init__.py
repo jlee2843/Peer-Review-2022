@@ -1,1 +1,1 @@
-__all__ = ['query', 'crossref', 'biorxiv_api']
+__all__ = ['crossref', 'biorxiv_api']
