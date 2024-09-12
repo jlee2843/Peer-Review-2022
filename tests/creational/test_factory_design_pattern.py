@@ -117,7 +117,7 @@ def load_article_factory_dataframe(result: np.ndarray,
     return df
 
 
-def test_instantiation_factory():
+def test_instantiation_base_object():
     with pytest.raises(RuntimeError, match='Please instantiate class through the corresponding Factory'):
         Article()
         Journal()
