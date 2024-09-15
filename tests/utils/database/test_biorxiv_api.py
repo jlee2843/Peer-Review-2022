@@ -28,7 +28,7 @@ import pytest
 
 from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.creational.database.QueryFactory import BioRvixQueryFactory
-from modules.utils.database.process_query_results import process_data, get_value
+from modules.utils.database.process_query_results import get_dict_value, process_json_data
 
 
 @pytest.fixture()
@@ -107,11 +107,11 @@ def process_biorxiv_query(query: Query, attr: str) -> None:
     result: dict = query.result['collection'][0]
     collection: List = list(result.keys())
     try:
-        _ = [get_value(result, key) for key in collection]
+        _ = [get_dict_value(result, key) for key in collection]
     except KeyError as exc:
         assert False, f'raised an exception {exc}'
 
-    tmp = process_data(query.result, 'collection', query.keys, 0)
+    tmp = process_json_data(json_data=query.result, section='collection', keys=query.keys, offset=0)
     assert tmp[0][1] == query.result['collection'][0].get(attr)
 
 

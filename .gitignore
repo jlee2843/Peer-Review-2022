@@ -4,3 +4,5 @@ __pycache__/
 *.zip
 Peer Review Project.Data/
 Peer Review Project.enl
+.idea
+.pytest_cache

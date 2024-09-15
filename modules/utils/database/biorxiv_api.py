@@ -9,7 +9,7 @@ from modules.behavioural.database.query import Query
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Journal, Article, Publication
 from modules.creational.factory_design_pattern import JournalFactory, PublicationFactory
-from modules.utils.database.process_query_results import get_value, convert_date
+from modules.utils.database.process_query_results import parse_date, get_dict_value
 
 PUBLICATION_PATH = Publication.__module__ + '.' + Publication.__qualname__
 ARTICLE_PATH = Article.__module__ + '.' + Article.__qualname__
@@ -60,7 +60,7 @@ def get_journal_name(query: Query, key: str = 'published_journal') -> str:
     _, result = query.execute()
     result = result.result['collection'][0]
     # return np.array(process_data(result.get_result(), 'collection', result.get_keys(), 0))[0, 8]
-    return get_value(result, key)
+    return get_dict_value(result, key)
 
 
 def create_journal(name: str) -> Journal:
@@ -152,7 +152,7 @@ def create_prepublish_df(df: pd.DataFrame) -> pd.DataFrame:
         df.Institution = df.Institution.map(lambda x: x.strip().upper()).astype('category')
         # applies the convert_date function to every entry in the Date column and then converts it to
         # pandas datetime64[ns] format.
-        df.Date = df.Date.map(lambda x: convert_date(x)).astype('datetime64[ns]')
+        df.Date = df.Date.map(lambda x: parse_date(x)).astype('datetime64[ns]')
         df.Version = df.Version.astype('int32')
         df.Type = df.Type.map(lambda x: x.strip().lower()).astype('category')
         df.Category = df.Category.map(lambda x: x.strip().title()).astype('category')

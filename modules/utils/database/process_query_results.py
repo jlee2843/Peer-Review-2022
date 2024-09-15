@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 import doi
 import numpy as np
@@ -8,137 +8,95 @@ import pandas as pd
 from pandas import Series
 
 
-def check_doi(x: str):
+def validate_doi(doi_string: str) -> str:
     """
-    Check DOI validity.
-
-    :param x: The input string representing a DOI (Digital Object Identifier).
-    :return: The input DOI string if it is valid.
+    Validates and returns the given DOI string if it is valid.
+    :param doi_string: The input string representing a DOI.
+    :return: The validated DOI string.
     :raises ValueError: If the input DOI is invalid.
     """
-    if doi.validate_doi(x.strip()) is None:
-        raise ValueError(f'invalid doi: {x.strip()}')
-    else:
-        return x.strip()
+    doi_string = doi_string.strip()
+    if not doi.validate_doi(doi_string):
+        raise ValueError(f'Invalid DOI: {doi_string}')
+    return doi_string
 
 
-def get_value(data: Dict[str, Any], key: str) -> Any:
+def get_dict_value(data: Dict[str, Any], key: str) -> Any:
     """
+    Retrieve the value associated with the specified key from the dictionary.
     :param data: A dictionary containing key-value pairs.
-    :param key: A string representing the key to be used to retrieve the value from the dictionary.
-    :return: The value associated with the specified key in the dictionary.
-
-    This function takes a dictionary and a key as input parameters. It attempts to retrieve the value associated with
-    the key from the dictionary. If the key is found in the dictionary, the corresponding value is returned. If the
-    key is not found, an exception is raised.
-
-    Example usage:
-    ```
-    data = {'a': 1, 'b': 2, 'c': 3}
-    key = 'b'
-    result = get_value(data, key)
-    print(result)  # Output: 2
-    ```
+    :param key: The key whose value needs to be retrieved.
+    :return: The value associated with the specified key.
+    :raises KeyError: If the key is not found in the dictionary.
     """
-    result = None
-
     try:
-        result = data[key]
-    except Exception as e:
-        print(f'key: {key} data: {data}\n{e}')
-        raise e
-
-    finally:
-        return result
+        return data[key]
+    except KeyError as e:
+        print(f'Key: {key}, Data: {data}\n{e}')
+        raise
 
 
-def convert_date(value: str):
+def parse_date(date_string: str) -> Union[datetime, pd.NaT]:
     """
-    :param value: A string representing a date in the format 'YYYY-MM-DD' with optional time information in the
-                  form 'HH:MM:SS'.
-    :return: A datetime object representing the date extracted from the given value. If the conversion fails,
-             returns `pd.NaT`.
+    Parses and returns a datetime object from the given date string.
+    :param date_string: A string representing a date in 'YYYY-MM-DD' format.
+    :return: A datetime object for the parsed date.
+    :returns: pd.NaT if the parsing fails.
     """
-
     try:
-        return datetime.strptime(value.strip().split(':')[0], '%Y-%m-%d')
+        return datetime.strptime(date_string.strip().split(':')[0], '%Y-%m-%d')
     except Exception as e:
         print(e)
         return pd.NaT
 
 
-def freq_count(x: pd.DataFrame, y: str) -> Series:
+def calculate_frequency(df: pd.DataFrame, column: str) -> Series:
     """
-    Perform frequency count on a pandas DataFrame series.
-
-    :param x: a pandas DataFrame series.
-    :param y: the column name of the series to perform frequency count on.
-    :return: the frequency count of the given series.
-
-    Example:
-        >>> import pandas as pd
-        >>> data = {'col1': [1, 2, 3, 2, 1, 3, 1]}
-        >>> df = pd.DataFrame(data)
-        >>> freq_count(df['col1'], 'col1')
-        1    3
-        2    2
-        3    2
-        Name: col1, dtype: int64
+    Performs frequency count on a specified column of a DataFrame.
+    :param df: A pandas DataFrame.
+    :param column: The column name to perform frequency count on.
+    :return: Series representing the frequency count of the specified column.
     """
-    return x[y].value_counts()
+    return df[column].value_counts()
 
 
-def flatten(y: list) -> list:
+def flatten_list(nested_list: List[List[Any]]) -> List[Any]:
     """
-    Flattens a nested list and sorts it based on the first element of each sublist.
-
-    :param y: a nested list
-    :return: a flattened list sorted based on the first element of each sublist
+    Flattens and sorts a nested list based on the first element of each sublist.
+    :param nested_list: A nested list of elements.
+    :return: A flattened and sorted list based on the first element of each sublist.
     """
-    return sorted([sublist for inner in y for sublist in inner], key=lambda x: x[0])
+    return sorted([sublist for inner in nested_list for sublist in inner], key=lambda x: x[0])
 
 
-# flatten = lambda y: sorted([sublist for inner in y for sublist in inner],
-#                           key=lambda x: x[0])
-
-def create_df(x: np.ndarray, y: List[str]) -> pd.DataFrame:
+def create_dataframe(data: np.ndarray, columns: List[str]) -> pd.DataFrame:
     """
-    Create a pandas DataFrame from the given numpy array and list of column names.
-
-    :param x: A numpy array containing the data.
-    :type x: np.ndarray
-    :param y: A list of column names.
-    :type y: List[str]
-    :return: A pandas DataFrame created from the input data with column names and an index.
-    :rtype: pd.DataFrame
+    Creates a DataFrame from numpy array and list of column names.
+    :param data: A numpy array containing data.
+    :param columns: A list of column names.
+    :return: A pandas DataFrame created from the input data.
     """
-    return pd.DataFrame(data=x[:, 1:], index=x[:, 0], columns=y)
+    return pd.DataFrame(data=data[:, 1:], index=data[:, 0], columns=columns)
 
 
-def process_data(json_info: dict, section: str, keys: Tuple[str], cursor: int, disable: bool = True) -> List:
+def process_json_data(json_data: dict, section: str, keys: Tuple[str], offset: int, add_delay: bool = False) -> List[
+    List[Any]]:
     """
-    Process data based on provided parameters.
-
-    :param json_info: A dictionary containing JSON data.
-    :param section: A string representing the section of the JSON data to process.
-    :param keys: A tuple of strings representing the keys to extract from each journal entry.
-    :param cursor: An integer representing the cursor value to increment each journal entry by.
-    :param disable: A boolean indicating whether a delay should be applied before processing (default is True).
-    :return: A list of lists representing processed data from journal entries.
+    Processes and returns data from a specified section of the JSON data.
+    :param json_data: A dictionary containing JSON data.
+    :param section: The section of JSON data to process.
+    :param keys: The keys to extract values from each journal entry.
+    :param offset: Value to increment each journal entry index by.
+    :param add_delay: Whether to add a delay before processing.
+    :return: List of processed journal entry data.
     """
-
-    # a list comprehension is created with a nested list comprehension inside.
-    # The outer list comprehension enumerates over entries in the section of the input json_info.
-    # Each enumerated entry is incremented by cursor and each journal entry is processed to determine its key's value
-    # using the get_value(journal, key) function call.
-    journal_list = [[entry + cursor] + [get_value(journal, key) for key in keys] for entry, journal in
-                    enumerate(json_info[section])]
-    if disable is False:
+    if add_delay:
         time.sleep(60)
 
-    # The function returns a list of lists(journal_list), where each inner list represents processed data from a journal
-    # entry.
-    return journal_list
+    def process_entry(entry_index: int, journal_entry: Dict[str, Any]) -> List[Any]:
+        return [entry_index + offset] + [get_dict_value(journal_entry, key) for key in keys]
+
+    return [process_entry(index, entry) for index, entry in enumerate(json_data[section])]
 
 
 if __name__ == '__main__':

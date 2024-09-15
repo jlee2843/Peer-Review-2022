@@ -5,7 +5,7 @@ import pytest
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.building_block import Article
 from modules.creational.factory_design_pattern import ArticleFactory
-from modules.utils.database.process_query_results import process_data
+from modules.utils.database.process_query_results import process_json_data
 from tests.creational.test_factory_design_pattern import load_article_factory_dataframe
 
 
@@ -62,7 +62,7 @@ def prepub_test_file():
 
     json_data = json.load(Path(filename).open())
     import numpy as np
-    result = np.array(process_data(json_data, 'collection', keys, 0))
+    result = np.array(process_json_data(json_data, 'collection', keys, 0))
 
     return result
 
@@ -81,6 +81,6 @@ def completed_test_file():
 
     json_data = json.load(Path(filename).open())
     import numpy as np
-    result = np.array(process_data(json_data, 'collection', keys, 0))
+    result = np.array(process_json_data(json_data, 'collection', keys, 0))
 
     return result
