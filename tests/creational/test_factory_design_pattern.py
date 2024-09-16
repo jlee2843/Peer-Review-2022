@@ -11,7 +11,7 @@ from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMe
 from modules.creational.factory_design_pattern import *
 from modules.utils.database.biorxiv_api import create_article, create_prepublish_df, create_journal, \
     get_journal_name, create_publication
-from modules.utils.database.process_query_results import process_json_data, create_dataframe
+from modules.utils.database.process_query_results import QueryUtils
 
 
 @pytest.fixture()
@@ -88,7 +88,7 @@ def prepub_test_file():
     filename = Path('../../data/prepub-test.json').absolute()
     assert filename.exists()
     json_data = json.load(filename.open())
-    result = np.array(process_json_data(json_data, 'collection', keys, 0))
+    result = np.array(QueryUtils.process_json(json_data, 'collection', keys, 0))
 
     return result
 
@@ -112,7 +112,7 @@ def load_article_factory_dataframe(result: np.ndarray,
                                    col_names=("DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
                                               "Version", "Type",
                                               "Category", "Xml", "Published")) -> pd.DataFrame:
-    df: pd.DataFrame = create_prepublish_df(create_dataframe(data=result, columns=col_names))
+    df: pd.DataFrame = create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=col_names))
     load_articles(df)
     return df
 
@@ -167,8 +167,8 @@ def test_create_article(prepub_query):
     Note: In order to use this method, make sure to import `np` from `numpy` and `pd` from `pandas` libraries.
     """
 
-    result = np.array(process_json_data(prepub_query.result, 'collection', prepub_query.keys, 0))
-    df = create_prepublish_df(create_dataframe(result, prepub_query.col_names))
+    result = np.array(QueryUtils.process_json(prepub_query.result, 'collection', prepub_query.keys, 0))
+    df = create_prepublish_df(QueryUtils.create_df_from_array(result, prepub_query.col_names))
     for row in range(len(df)):
         row = str(row)
         doi = df.loc[row, 'DOI']
@@ -218,8 +218,8 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     result = test_create_publication(prepub_query, pubs_query)
     """
 
-    result = np.array(process_json_data(prepub_query.result, 'collection', prepub_query.keys, 0))
-    df = create_prepublish_df(create_dataframe(data=result, columns=prepub_query.col_names))
+    result = np.array(QueryUtils.process_json(prepub_query.result, 'collection', prepub_query.keys, 0))
+    df = create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=prepub_query.col_names))
     article = create_article(doi=df.loc['0', 'DOI'],
                              title=df.loc['0', 'Title'],
                              authors=df.loc['0', 'Authors'],
@@ -246,7 +246,8 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
     :return: None
     """
 
-    df: pd.DataFrame = create_prepublish_df(create_dataframe(data=prepub_test_file, columns=prepub_query.col_names))
+    df: pd.DataFrame = create_prepublish_df(
+        QueryUtils.create_df_from_array(data_array=prepub_test_file, cols=prepub_query.col_names))
     load_articles(df)
     missing_items: SortedList[str] = PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
     url = 'https://api.biorxiv.org/details/biorxiv/'
@@ -256,8 +257,8 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
         query = BioRvixQuery(url + doi, prepub_query.keys, prepub_query.col_names)
         result: BioRvixQuery = query.execute(0)[1]
         data: dict = result.result
-        tmp: np.array = np.array(process_json_data(data, 'collection', prepub_query.keys, 0))
-        df = create_prepublish_df(create_dataframe(data=tmp, columns=prepub_query.col_names))
+        tmp: np.array = np.array(QueryUtils.process_json(data, 'collection', prepub_query.keys, 0))
+        df = create_prepublish_df(QueryUtils.create_df_from_array(data_array=tmp, cols=prepub_query.col_names))
         for line in range(len(df)):
             line = str(line)
             articles.append(create_article(doi=df.loc[line, 'DOI'], title=df.loc[line, 'Title'],
