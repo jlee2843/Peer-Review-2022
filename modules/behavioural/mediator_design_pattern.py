@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from readerwriterlock import rwlock
 from sortedcontainers import SortedList, SortedDict
 
-from modules.building_block import MediatorKey, Institution, Publication, Article, InteractionType
+from modules.building_block import MediatorKey, Institution, Publication, Article, InteractionType, Utils
 
 # Logger setup
 logger = logging.getLogger(__name__)
@@ -22,9 +22,7 @@ class Mediator(ABC):
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._lock = rwlock.RWLockFair()
-            cls._instance._rlock = cls._instance._lock.gen_rlock()
-            cls._instance._wlock = cls._instance._lock.gen_wlock()
+            cls._instance._lock, cls._instance._rlock, cls._instance._wlock = Utils.initiating_rwlock()
             cls._instance._mediator_map: Dict[
                 Union[MediatorKey, str], Union[SortedList[Any], SortedDict[int, Article]]] = {}
         return cls._instance

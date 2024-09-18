@@ -1,3 +1,4 @@
+import pprint
 from importlib import import_module
 from types import ModuleType
 from typing import Dict
@@ -19,11 +20,10 @@ class AbstractSingletonFactory(ABC):
 
     @classmethod
     def __new__(cls, *args, **kwargs):
+
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._lock = rwlock.RWLockFair()
-            cls._instance._rlock = cls._instance._lock.gen_rlock()
-            cls._instance._wlock = cls._instance._lock.gen_wlock()
+            cls._instance._lock, cls._instance._rlock, cls._instance._wlock = Utils.initiating_rwlock()
         return cls._instance
 
     def _import_class(self, path: str) -> Any:

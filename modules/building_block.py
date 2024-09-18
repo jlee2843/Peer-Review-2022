@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Type, Tuple
 
 from readerwriterlock import rwlock
 
@@ -54,9 +54,7 @@ class BaseObject(ABC):
         if args == () and kwargs == {}:
             raise RuntimeError('Please instantiate class through the corresponding Factory')
 
-        self._lock = rwlock.RWLockFair()
-        self._rlock = self._lock.gen_rlock()
-        self._wlock = self._lock.gen_wlock()
+        self._lock, self._rlock, self._wlock = Utils.initiating_rwlock()
 
     @staticmethod
     def get_value(key: Any, default: Any = NoDefaultValueGiven, **kwargs) -> Any:
@@ -248,6 +246,14 @@ class Article(BaseObject):
     def pub_doi(self) -> str:
         return self._pub_doi
 
+    @property
+    def category(self) -> List[str]:
+        return self._category
+
+    @property
+    def type(self) -> str:
+        return self._type
+
 
 @dataclass
 class Journal(BaseObject):
@@ -334,3 +340,13 @@ class InteractionType(Enum):
     ADD = 2
     UPDATE = 3
     GET = 4
+
+
+class Utils:
+    @staticmethod
+    def initiating_rwlock() -> Tuple[rwlock.RWLockFair, object, object]:
+        lock = rwlock.RWLockFair()
+        rlock = lock.gen_rlock()
+        wlock = lock.gen_wlock()
+
+        return lock, rlock, wlock
