@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Union, Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,7 @@ import pytest
 from modules.behavioural.database.query import Query, BioRvixQuery
 from modules.behavioural.mediator_design_pattern import PublishedPrepubArticleMediator
 from modules.creational.factory_design_pattern import *
-from modules.utils.database.biorxiv_api import create_article, create_prepublish_df, create_journal, \
-    get_journal_name, create_publication
+from modules.utils.database.biorxiv_api import BioRvixDatabaseUtils as bio
 from modules.utils.database.process_query_results import QueryUtils
 
 
@@ -95,24 +94,24 @@ def prepub_test_file():
 
 def load_articles(df: pd.DataFrame):
     for row in range(len(df)):
-        create_article(doi=df.loc[str(row), 'DOI'],
-                       title=df.loc[str(row), 'Title'],
-                       authors=df.loc[str(row), 'Authors'],
-                       corr_authors=df.loc[str(row), 'Corresponding_Authors'],
-                       institution=df.loc[str(row), 'Institution'],
-                       date=df.loc[str(row), 'Date'],
-                       version=df.loc[str(row), 'Version'],
-                       type=df.loc[str(row), 'Type'],
-                       category=df.loc[str(row), 'Category'],
-                       xml=df.loc[str(row), 'Xml'],
-                       pub_doi=df.loc[str(row), 'Published'])
+        bio.create_article(doi=df.loc[str(row), 'DOI'],
+                           title=df.loc[str(row), 'Title'],
+                           authors=df.loc[str(row), 'Authors'],
+                           corr_authors=df.loc[str(row), 'Corresponding_Authors'],
+                           institution=df.loc[str(row), 'Institution'],
+                           date=df.loc[str(row), 'Date'],
+                           version=df.loc[str(row), 'Version'],
+                           type=df.loc[str(row), 'Type'],
+                           category=df.loc[str(row), 'Category'],
+                           xml=df.loc[str(row), 'Xml'],
+                           pub_doi=df.loc[str(row), 'Published'])
 
 
 def load_article_factory_dataframe(result: np.ndarray,
                                    col_names=("DOI", "Title", "Authors", "Corresponding_Authors", "Institution", "Date",
                                               "Version", "Type",
                                               "Category", "Xml", "Published")) -> pd.DataFrame:
-    df: pd.DataFrame = create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=col_names))
+    df: pd.DataFrame = bio.create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=col_names))
     load_articles(df)
     return df
 
@@ -168,16 +167,16 @@ def test_create_article(prepub_query):
     """
 
     result = np.array(QueryUtils.process_json(prepub_query.result, 'collection', prepub_query.keys, 0))
-    df = create_prepublish_df(QueryUtils.create_df_from_array(result, prepub_query.col_names))
+    df = bio.create_prepublish_df(QueryUtils.create_df_from_array(result, prepub_query.col_names))
     for row in range(len(df)):
         row = str(row)
         doi = df.loc[row, 'DOI']
-        create_article(doi=df.loc[row, 'DOI'], title=df.loc[row, 'Title'],
-                       authors=df.loc[row, 'Authors'], corr_authors=df.loc[row, 'Corresponding_Authors'],
-                       institution=df.loc[row, 'Institution'], date=df.loc[row, 'Date'],
-                       version=df.loc[row, 'Version'], type=df.loc[row, 'Type'],
-                       category=df.loc[row, 'Category'], xml=df.loc[row, 'Xml'],
-                       pub_doi=df.loc[row, 'Published'])
+        bio.create_article(doi=df.loc[row, 'DOI'], title=df.loc[row, 'Title'],
+                           authors=df.loc[row, 'Authors'], corr_authors=df.loc[row, 'Corresponding_Authors'],
+                           institution=df.loc[row, 'Institution'], date=df.loc[row, 'Date'],
+                           version=df.loc[row, 'Version'], type=df.loc[row, 'Type'],
+                           category=df.loc[row, 'Category'], xml=df.loc[row, 'Xml'],
+                           pub_doi=df.loc[row, 'Published'])
 
         assert doi == '10.1101/2021.04.29.21256344'
         assert ArticleFactory().get_factory_object(identifier=doi) is not None
@@ -192,8 +191,8 @@ def test_create_journal(pubs_query: Query) -> None:
     :return: None
     """
 
-    journal = create_journal(name=get_journal_name(pubs_query))
-    assert get_journal_name(pubs_query) == 'PLOS ONE'
+    journal = bio.create_journal(name=bio.get_journal_name(pubs_query))
+    assert bio.get_journal_name(pubs_query) == 'PLOS ONE'
     assert type(journal) is Journal
     assert journal is JournalFactory().get_factory_object(journal.title)
     assert journal.prefix == ''
@@ -219,23 +218,24 @@ def test_create_publication(prepub_query: Query, pubs_query: Query) -> None:
     """
 
     result = np.array(QueryUtils.process_json(prepub_query.result, 'collection', prepub_query.keys, 0))
-    df = create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=prepub_query.col_names))
-    article = create_article(doi=df.loc['0', 'DOI'],
-                             title=df.loc['0', 'Title'],
-                             authors=df.loc['0', 'Authors'],
-                             corr_authors=df.loc['0', 'Corresponding_Authors'],
-                             institution=df.loc['0', 'Institution'],
-                             date=df.loc['0', 'Date'],
-                             version=df.loc['0', 'Version'],
-                             type=df.loc['0', 'Type'],
-                             category=df.loc['0', 'Category'],
-                             xml=df.loc['0', 'Xml'],
-                             pub_doi=df.loc['0', 'Published'])
+    df = bio.create_prepublish_df(QueryUtils.create_df_from_array(data_array=result, cols=prepub_query.col_names))
+    article = bio.create_article(doi=df.loc['0', 'DOI'],
+                                 title=df.loc['0', 'Title'],
+                                 authors=df.loc['0', 'Authors'],
+                                 corr_authors=df.loc['0', 'Corresponding_Authors'],
+                                 institution=df.loc['0', 'Institution'],
+                                 date=df.loc['0', 'Date'],
+                                 version=df.loc['0', 'Version'],
+                                 type=df.loc['0', 'Type'],
+                                 category=df.loc['0', 'Category'],
+                                 xml=df.loc['0', 'Xml'],
+                                 pub_doi=df.loc['0', 'Published'])
 
     assert article is not None
-    journal = create_journal(name=get_journal_name(pubs_query))
-    publication = create_publication(journal=journal, article=article)
+    journal = bio.create_journal(name=bio.get_journal_name(pubs_query))
+    publication = bio.create_publication(journal=journal, article=article)
     assert publication is PublicationFactory().get_factory_object(article.pub_doi)
+
 
 def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Query) -> None:
     """
@@ -246,7 +246,7 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
     :return: None
     """
 
-    df: pd.DataFrame = create_prepublish_df(
+    df: pd.DataFrame = bio.create_prepublish_df(
         QueryUtils.create_df_from_array(data_array=prepub_test_file, cols=prepub_query.col_names))
     load_articles(df)
     missing_items: SortedList[str] = PublishedPrepubArticleMediator().get_missing_initial_prepub_articles_list()
@@ -258,16 +258,16 @@ def test_receive_initial_version(prepub_test_file: np.ndarray, prepub_query: Que
         result: BioRvixQuery = query.execute(0)[1]
         data: dict = result.result
         tmp: np.array = np.array(QueryUtils.process_json(data, 'collection', prepub_query.keys, 0))
-        df = create_prepublish_df(QueryUtils.create_df_from_array(data_array=tmp, cols=prepub_query.col_names))
+        df = bio.create_prepublish_df(QueryUtils.create_df_from_array(data_array=tmp, cols=prepub_query.col_names))
         for line in range(len(df)):
             line = str(line)
-            articles.append(create_article(doi=df.loc[line, 'DOI'], title=df.loc[line, 'Title'],
-                                           authors=df.loc[line, 'Authors'],
-                                           corr_authors=df.loc[line, 'Corresponding_Authors'],
-                                           institution=df.loc[line, 'Institution'], date=df.loc[line, 'Date'],
-                                           version=df.loc[line, 'Version'], type=df.loc[line, 'Type'],
-                                           category=df.loc[line, 'Category'], xml=df.loc[line, 'Xml'],
-                                           pub_doi=df.loc[line, 'Published']))
+            articles.append(bio.create_article(doi=df.loc[line, 'DOI'], title=df.loc[line, 'Title'],
+                                               authors=df.loc[line, 'Authors'],
+                                               corr_authors=df.loc[line, 'Corresponding_Authors'],
+                                               institution=df.loc[line, 'Institution'], date=df.loc[line, 'Date'],
+                                               version=df.loc[line, 'Version'], type=df.loc[line, 'Type'],
+                                               category=df.loc[line, 'Category'], xml=df.loc[line, 'Xml'],
+                                               pub_doi=df.loc[line, 'Published']))
 
         pub_doi: str = articles[0].pub_doi
         article = PublishedPrepubArticleMediator().get_object(pub_doi)[1]
