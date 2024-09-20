@@ -6,6 +6,7 @@ import doi
 import numpy as np
 import pandas as pd
 from pandas import Series
+from pandas._libs import NaTType
 
 DATE_FORMAT = '%Y-%m-%d'
 DELAY_SECONDS = 60  # extracted constant
@@ -41,7 +42,7 @@ class QueryUtils:
             raise
 
     @staticmethod
-    def parse_date(date_str: str) -> Union[datetime, pd.NaT]:
+    def parse_date(date_str: str) -> Union[datetime, NaTType]:
         """
         Parses and returns a datetime object from the given date string.
         :param date_str: A string representing a date in 'YYYY-MM-DD' format.
